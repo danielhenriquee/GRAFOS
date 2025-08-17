@@ -1,0 +1,338 @@
+/*
+Fazer um programa de computador que permita criar um grafo (informando seus vértices e arcos ou arestas) e implementar os algoritmos de DFS e BFS conforme apresendado em aula.
+- DFS - Depth First Search (profundidade)
+- BFS – Breadth First Search (Largura ou amplitude)
+
+A programa deve gerar um grafo informado pelo usuário. Mostrar a matriz de adjacência do grafo e os percursos DFS e BFS.
+Também deve ter uma opção para o usuário pesquisar algum vértice do grafo. Nesse caso, a resposta será se o vértice existe ou não no grafo.
+*/
+
+#include <iostream>
+#include <stdexcept>
+#include <cstdlib>
+using namespace std;
+
+#define TAM 100 // Número de vértices do grafo
+
+void clear() {
+#ifdef _WIN32
+    system("cls");
+#else
+    system("clear");
+#endif
+}
+
+void pause() {
+    cout << "\nPressione ENTER para continuar...";
+    cin.ignore(); // descarta o '\n' que ficou no buffer
+    cin.get();    // espera o Enter do usuário
+}
+
+// Elemento genérico
+template <typename T>
+struct element {
+    T data;
+};
+
+// ========== PILHA ESTÁTICA GENÉRICA ==========
+
+// Pilha estática genérica
+template <typename T, int MAX>
+struct SS_stack {
+    element<T> vertices[MAX];
+    int size; // Contador de elementos
+};
+
+// Inicializar pilha
+template <typename T, int MAX>
+void SS_boot(SS_stack<T, MAX> &stack) {
+    stack.size = 0;
+}
+
+// Inserir (push)
+template <typename T, int MAX>
+bool SS_push(SS_stack<T, MAX> &stack, T data) {
+    if (stack.size == MAX) // Se está cheia
+        return false;
+
+    element<T> v;
+    v.data = data;
+    stack.vertices[stack.size] = v; // Insere no topo
+    stack.size++;
+    return true;
+}
+
+// Remover (pop)
+template <typename T, int MAX>
+T SS_pop(SS_stack<T, MAX> &stack) {
+    if (stack.size == 0) // Se está vazia
+        throw runtime_error("Pilha vazia");
+
+    stack.size--;
+    return stack.vertices[stack.size].data; // Retorna o último elemento
+}
+
+// Verifica se a pilha está vazia
+template <typename T, int MAX>
+bool SS_isEmpty(SS_stack<T, MAX> &stack) {
+    return stack.size == 0;
+}
+
+// ========== FILA ESTÁTICA GENÉRICA ==========
+
+// Pilha estática genérica
+template <typename T, int MAX>
+struct SQ_queue {
+    element<T> vertices[MAX];
+    int size; // Contador de elementos
+};
+
+// Inicializar fila
+template <typename T, int MAX>
+void SQ_boot(SQ_queue<T, MAX> &queue) {
+    queue.size = 0;
+}
+
+// Inserir (queue)
+template <typename T, int MAX>
+bool SQ_enqueue(SQ_queue<T, MAX> &queue, T data) {
+    if (queue.size == MAX) // Se está cheia
+        return false;
+
+    queue.vertices[queue.size].data = data; // Adiciona no final
+    queue.size++;
+    return true;
+}
+
+// Remover (dequeue)
+template <typename T, int MAX>
+T SQ_dequeue(SQ_queue<T, MAX> &queue) {
+    if (queue.size == 0) // Se está vazia
+        throw runtime_error("Fila vazia");
+
+    T data = queue.vertices[0].data; // Save data of the first element
+    for (int i = 0; i < queue.size - 1; i++)
+        queue.vertices[i] = queue.vertices[i + 1];
+    queue.size--;
+    return data;
+}
+
+// Verifica se a fila está vazia
+template <typename T, int MAX>
+bool SQ_isEmpty(SQ_queue<T, MAX> &queue) {
+    return queue.size == 0;
+}
+
+// ========== MATRIZ DE ADJACÊNCIA ==========
+
+void imprimir(bool matriz[TAM][TAM], int maxV) {
+    const char* green  = "\033[32m";
+    const char* red    = "\033[31m";
+    const char* reset  = "\033[0m";
+
+    cout << "\nMatriz de Adjacencia\n\n";
+    for (int i = 0; i < maxV; i++) {
+        for (int j = 0; j < maxV; j++) {
+            if (matriz[i][j])
+                cout << green << matriz[i][j] << " " << reset;
+            else
+                cout << red << matriz[i][j] << " " << reset;
+        }
+        cout << endl;
+    }
+}
+
+void preencherMatriz(bool matriz[TAM][TAM], int maxV) {
+    int tipo;
+    cout << "NAO DIRIGIDO = 0   DIRIGIDO = 1: ";
+    cin >> tipo;
+    while (tipo != 0 && tipo != 1) {
+        cout << "Valor invalido. Digite 0 ou 1: ";
+        cin >> tipo;
+    }
+    cout << endl << endl;
+    cin.ignore();
+
+    if (tipo == 1) { // Dirigido
+        int b;
+        for (int i = 0; i < maxV; i++) {
+            for (int j = 0; j < maxV; j++) {
+                if (i != j) {
+                    cout << i + 1 << " aponta para o vertice " << j + 1 << "? (1 ou 0): ";
+                    cin >> b;
+                    while (b != 0 && b != 1) {
+                        cout << "Valor invalido. Digite 0 ou 1: ";
+                        cin >> b;
+                    }
+                    matriz[i][j] = b;
+                }
+            }
+        }
+    } else if (tipo == 0) { // Não dirigido
+        int b;
+        for (int i = 0; i < maxV; i++) {
+            for (int j = i + 1; j < maxV; j++) {
+                cout << i + 1 << " esta ligado com o vertice " << j + 1 << " (1 ou 0): ";
+                cin >> b;
+                while (b != 0 && b != 1) {
+                        cout << "Valor invalido. Digite 0 ou 1: ";
+                        cin >> b;
+                }
+                matriz[i][j] = matriz[j][i] = b;
+            }
+        }
+    }
+}
+
+// DFS (busca em profundidade)
+void DFS(bool matriz[TAM][TAM], int origem, int maxV) {
+    SS_stack<int, TAM> pilha;
+    bool visitado[TAM] = {false};
+    SS_boot(pilha);
+    SS_push(pilha, origem);
+
+    cout << "\nDFS (profundidade) a partir do vertice " << origem + 1 << "\n";
+
+    while (true) {
+        while (!SS_isEmpty(pilha)) { // Enquanto a pilha não estiver vazia
+            int atual = SS_pop(pilha);
+
+            if (!visitado[atual]) { // Verifica se o vértice já foi visitado
+                visitado[atual] = true;
+                cout << atual + 1 << " ";
+                for (int i = maxV - 1; i >= 0; i--) { // Adiciona os vizinhos não visitados na pilha
+                    if (matriz[atual][i] && !visitado[i]) {
+                        SS_push(pilha, i);
+                    }
+                }
+            }
+        }
+
+        // Procura vértice não visitado
+        bool v = false;
+        for (int i = 0; i < maxV; i++) {
+            if (!visitado[i]) {
+                SS_push(pilha, i);
+                v = true;
+                break;
+            }
+        }
+        if (!v) break; // Todos visitados, sai do DFS
+
+    }
+
+    cout << endl;
+}
+
+// BFS (busca em largura)
+void BFS(bool matriz[TAM][TAM], int origem, int maxV) {
+    SQ_queue<int, TAM> fila;
+    bool visitado[TAM] = {false};
+    SQ_boot(fila);
+    SQ_enqueue(fila, origem);
+
+    cout << "\nBFS (largura) a partir do vertice " << origem + 1 << "\n";
+
+    while (true) {
+        while (!SQ_isEmpty(fila)) { // Enquanto a fila não estiver vazia
+            int atual = SQ_dequeue(fila);
+
+            if (!visitado[atual]) { // Verifica se o vértice já foi visitado
+                visitado[atual] = true;
+                cout << atual + 1 << " ";
+                for (int i = 0; i < maxV; i++) { // Adiciona os vizinhos não visitados na fila
+                    if (matriz[atual][i] && !visitado[i]) {
+                        SQ_enqueue(fila, i);
+                    }
+                }
+            }
+        }
+
+        // Procura vértice não visitado
+        bool v = false;
+        for (int i = 0; i < maxV; i++) {
+            if (!visitado[i]) {
+                SQ_enqueue(fila, i);
+                v = true;
+                break;
+            }
+        }
+        if (!v) break; // Todos visitados, sai do BFS
+
+    }
+
+    cout << endl;
+}
+
+// PESQUISA VÉRTICE
+void pesquisarVertice(int v, int maxV) {
+    if (v >= 1 && v <= maxV)
+        cout << "O vertice " << v << " existe no grafo.\n";
+    else
+        cout << "O vertice " << v << " nao existe no grafo.\n";
+}
+
+
+int main() {
+    int maxV;
+    cout << "Entre com o numero de vertices do grafo (max " << TAM << "): ";
+    cin >> maxV;
+    clear();
+
+    bool matriz[TAM][TAM] = {0};
+    preencherMatriz(matriz, maxV);
+
+    int menu = 0;
+    while (menu != 5) {
+        clear();
+        imprimir(matriz, maxV);
+
+        cout << "\n\n1-DFS   2-BFS   3-PESQUISAR   4-ALTERAR GRAFO   5-SAIR\n";
+        cin >> menu;
+
+        switch (menu) {
+        case 1: {
+            int origem;
+            cout << "\nDigite o vertice inicial para o DFS (1 a " << maxV <<"): ";
+            cin >> origem;
+            while (origem < 1 || origem > maxV) {
+                cout << "Valor invalido. Tente novamente: ";
+                cin >> origem;
+            }
+            DFS(matriz, origem - 1, maxV);
+            pause();
+            break;
+        }
+        case 2: {
+            int origem;
+            cout << "\nDigite o vertice inicial para o BFS (1 a " << maxV <<"): ";
+            cin >> origem;
+            while (origem < 1 || origem > maxV) {
+                cout << "Valor invalido. Tente novamente: ";
+                cin >> origem;
+            }
+            BFS(matriz, origem - 1, maxV);
+            pause();
+            break;
+        }
+        case 3: {
+            int v;
+            cout << "Digite o numero do vertice que deseja pesquisar (1 a " << maxV <<"): ";
+            cin >> v;
+            pesquisarVertice(v, maxV);
+            pause();
+            break;
+        }
+        case 4:
+            for (int i = 0; i < maxV; i++)
+                for (int j = 0; j < maxV; j++)
+                    matriz[i][j] = false;
+            cout << "Entre com o numero de vertices do grafo (max " << TAM << "): ";
+            cin >> maxV;
+            preencherMatriz(matriz, maxV);
+            break;
+        default:
+            break;
+        }
+    }
+}
