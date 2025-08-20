@@ -2,21 +2,21 @@
 using namespace std;
 
 struct Pilha {
-    int indiceTopo;  // Índice do elemento no topo
-    int capacidade;  // Capacidade máxima da pilha
-    int* elementos;  // Vetor para armazenar os elementos
+    int indiceTopo; // Índice do elemento no topo
+    int capacidade; // Capacidade máxima da pilha
+    int *elementos; // Vetor dinâmico que armazena os elementos
 };
 
 // Cria a pilha com tamanho definido
-void criarPilha(Pilha& pilha, int capacidade) {
+void criarPilha(Pilha &pilha, int capacidade) {
     pilha.capacidade = capacidade;
-    pilha.indiceTopo = -1; // -1 indica pilha vazia
+    pilha.indiceTopo = -1; // -1 = fila vazia
     pilha.elementos = new int[capacidade];
 }
 
-// Adiciona elemento ao topo
-bool empilhar(Pilha& pilha, int valor) {
-    if (pilha.indiceTopo == pilha.capacidade - 1) {
+// Adiciona elemento no topo da pilha
+bool empilhar(Pilha &pilha, int valor) {
+    if (pilha.indiceTopo == pilha.capacidade - 1) { // Verifica se a pilha está cheia
         cout << "Erro: pilha cheia!" << endl;
         return false;
     }
@@ -25,36 +25,36 @@ bool empilhar(Pilha& pilha, int valor) {
     return true;
 }
 
-// Remove e retorna elemento do topo
-bool desempilhar(Pilha& pilha, int& valorRemovido) {
-    if (pilha.indiceTopo == -1) {
+// Remove e retorna elemento do topo da pilha
+bool desempilhar(Pilha &pilha, int &valorRemovido) {
+    if (pilha.indiceTopo == -1) { // Verifica se a pilha está vazia
         cout << "Erro: pilha vazia!" << endl;
         return false;
     }
-    valorRemovido = pilha.elementos[pilha.indiceTopo];
+    valorRemovido = pilha.elementos[pilha.indiceTopo]; // Retorna por referência do argumento o valor removido
     pilha.indiceTopo--;
     return true;
 }
 
-// Consulta o topo sem remover
-bool topo(Pilha& pilha, int& valorTopo) {
-    if (pilha.indiceTopo == -1) {
+// Consulta o topo da pilha
+bool topo(const Pilha &pilha, int &valorTopo) {
+    if (pilha.indiceTopo == -1) { // Verifica se a pilha está vazia
         cout << "Pilha vazia!" << endl;
         return false;
     }
-    valorTopo = pilha.elementos[pilha.indiceTopo];
+    valorTopo = pilha.elementos[pilha.indiceTopo]; // Retorna por referência do argumento o valor do topo da pilha
     return true;
 }
 
+// Verifica se a pilha está vazia
+bool vazia(const Pilha &pilha) {
+    return pilha.indiceTopo == -1;
+}
+
 // Libera memória
-void destruirPilha(Pilha& pilha) {
+void destruirPilha(Pilha &pilha) {
     delete[] pilha.elementos;
     pilha.elementos = nullptr;
     pilha.indiceTopo = -1;
     pilha.capacidade = 0;
-}
-
-// Verifica se a pilha está vazia
-bool vazia(const Pilha& pilha) {
-    return pilha.indiceTopo == -1;
 }

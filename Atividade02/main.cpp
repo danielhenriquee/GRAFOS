@@ -1,4 +1,3 @@
-
 #include "pilha.h"
 #include "fila.h"
 #include <limits>
@@ -12,18 +11,27 @@ constexpr const char* RED = "\033[31m";   // Vermelho
 constexpr const char* GREEN = "\033[32m"; // Verde
 constexpr const char* RESET = "\033[0m";  // Resetar cor
 
+void clear() {
+#ifdef _WIN32
+    system("cls");
+#else
+    system("clear");
+#endif
+}
 
-// Exibe a matriz de adjacência com cores.
-// 0 (sem aresta) = vermelho
-// 1 (com aresta) = verde
-void mostrarGrafo(int G[][MAX_VERTICES], int numVertices){
-    for(int i = 0; i < numVertices; i++){
-        for(int j = 0; j < numVertices; j++){
+void pause() {
+    cout << "\nPressione ENTER para continuar...";
+    cin.ignore(); // descarta o '\n' que ficou no buffer
+    cin.get();    // espera o Enter do usuário
+}
+
+// Exibe a matriz de adjacência
+void mostrarGrafo(int G[][MAX_VERTICES], int numVertices) {
+    for(int i = 0; i < numVertices; i++) {
+        for(int j = 0; j < numVertices; j++) {
             if (G[i][j] == 0) {
-                // Vermelho para aresta inexistente
                 cout << RED << G[i][j] << RESET << " ";
             } else {
-                // Verde para aresta existente
                 cout << GREEN << G[i][j] << RESET << " ";
             }
         }
@@ -31,9 +39,8 @@ void mostrarGrafo(int G[][MAX_VERTICES], int numVertices){
     }
 }
 
-
 // Retorna "true" se o vértice já foi visitado. Se o índice for inválido, emite um aviso e retorna "true" para evitar acessos fora do vetor.
-bool foiVisitado(int v, bool visitados[], int numVertices){
+bool foiVisitado(int v, bool visitados[], int numVertices) {
     if (v < 0 || v >= numVertices) {
         cout << "Aviso: vértice inválido acessado!\n";
         return true; 
@@ -41,9 +48,8 @@ bool foiVisitado(int v, bool visitados[], int numVertices){
     return visitados[v];
 }
 
-
 // Marca o vértice como visitado e imprime a ação.
-void visitar(int v, bool visitados[], int numVertices){
+void visitar(int v, bool visitados[], int numVertices) {
     if (v < 0 || v >= numVertices) {
         cout << "Vértice inválido!\n";
         return;
@@ -53,91 +59,104 @@ void visitar(int v, bool visitados[], int numVertices){
 }
 
 // Função: DFS (busca em profundidade)
-// Estratégia LIFO (último que entra é o primeiro que sai).
-void DFS(int v, int G[][MAX_VERTICES], int numVertices, bool visitados[]){
+void DFS(int v, int G[][MAX_VERTICES], int numVertices, bool visitados[]) {
     Pilha S;
     criarPilha(S, MAX_VERTICES);
 
-    // Começamos empilhando o vértice inicial
-    empilhar(S, v);
+    visitar(v, visitados, numVertices); // Marca o vértice como visitado
+    empilhar(S, v); // Empilha o vértice de origem
 
-    // Enquanto houver vértices na pilha
-    while(!vazia(S)){
-        int atual;
-        desempilhar(S, atual); // Pega o último vértice inserido
+    while (true) {
+        while (!vazia(S)) { // Enquanto houver vértices na pilha
+            int atual;
+            desempilhar(S, atual); // Desempilha o último vértice inserido na pilha;
 
-        // Se ainda não foi visitado, processamos ele
-        if(!foiVisitado(atual, visitados, numVertices)){
-            visitar(atual, visitados, numVertices);
-
-            // Adiciona vizinhos do vértice atual na pilha
-            // Se houver aresta (atual -> e) e o vizinho não foi visitado
-            for(int e = numVertices - 1; e >= 0; e--){
-                if(G[atual][e] == 1 && !foiVisitado(e, visitados, numVertices)){
-                    empilhar(S, e);
+            for (int i = numVertices - 1; i >= 0; i--) { 
+                if (G[atual][i] == 1 && !foiVisitado(i, visitados, numVertices)) { // Adiciona os vértices adjacentes não visitados na pilha
+                    visitar(i, visitados, numVertices); // Marca o vértice como visitado
+                    empilhar(S, i);
                 }
             }
         } 
-    } 
-    destruirPilha(S); // Libera memória da pilha
+ 
+        // Procura vértice não visitado (grafo desconexo)
+        bool aux = false;
+        for (int i = 0; i < numVertices; i++) {
+            if (!visitados[i]) {
+                visitar(i, visitados, numVertices); // Marca o vértice como visitado
+                empilhar(S, i);
+                aux = true;
+                break;
+            }
+        }
+
+        if (!aux) { // Se todos os vértices foram marcados, sai do DFS
+            destruirPilha(S);
+            break;
+        }
+    }
 }
 
 // Função: BFS (busca em largura)
-// Estratégia FIFO (primeiro que entra é o primeiro que sai).
-void BFS(int v, int G[][MAX_VERTICES], int numVertices, bool visitados[]){
+void BFS(int v, int G[][MAX_VERTICES], int numVertices, bool visitados[]) {
     Fila Q;
     criarFila(Q, MAX_VERTICES);
 
-    // Coloca o vértice inicial na fila
-    enfileirar(Q, v);
+    visitar(v, visitados, numVertices); // Marca o vértice como visitado
+    enfileirar(Q, v); // Enfileira o vértice de origem
 
-    // Enquanto houver vértices na fila
-    while(!vazia(Q)){
-        int t;
-        desenfileirar(Q, t); // Retira o primeiro da fila
+    while (true) {
+        while (!vazia(Q)){ // Enquanto houver vértices na fila
+            int atual;
+            desenfileirar(Q, atual); // Desenfileira o primeiro vértice da fila
 
-        // Se ainda não visitado, processamos
-        if(!foiVisitado(t, visitados, numVertices)){
-            visitar(t, visitados, numVertices);
-
-            // Adiciona todos os vizinhos não visitados na fila
-            for(int i=0; i<numVertices; i++){
-                if(G[t][i]==1 && !foiVisitado(i, visitados, numVertices))
+            for (int i = 0; i < numVertices; i++) {
+                if (G[atual][i] == 1 && !foiVisitado(i, visitados, numVertices)) { // Adiciona os vértices adjacentes não visitados na fila
+                    visitar(i, visitados, numVertices); // Marca o vértice como visitado
                     enfileirar(Q, i);
+                }
             }
         }
+
+        // Procura vértice não visitado (grafo desconexo)
+        bool aux = false;
+        for (int i = 0; i < numVertices; i++) {
+            if (!visitados[i]) {
+                visitar(i, visitados, numVertices);
+                enfileirar(Q, i);
+                aux = true;
+                break;
+            }
+        }
+
+        if (!aux) { // Se todos os vértices foram marcados, sai do BFS
+            destruirFila(Q);
+            break;
+        }
     }
-    destruirFila(Q); // Libera memória da fila
 }
 
-
-// Verifica se existe caminho entre dois vértices (u -> w) usando BFS.
-bool existeCaminho(int u, int w, int G[][MAX_VERTICES], int numVertices){
-    bool visitados[MAX_VERTICES] = {false}; // Marca quem já foi visitado
+// Verifica se existe caminho entre dois vértices (u -> w) usando BFS
+bool existeCaminho(int u, int w, int G[][MAX_VERTICES], int numVertices) {
+    bool visitados[MAX_VERTICES] = {false}; // Marca os vértices visitados
     Fila Q;
     criarFila(Q, numVertices);
+    enfileirar(Q, u); // Enfileira o vértice de origem
 
-    // Inicia a busca com o vértice u
-    enfileirar(Q, u);
-
-    // Enquanto houver vértices para explorar
-    while(!vazia(Q)){
+    
+    while(!vazia(Q)) { // Enquanto houver vértices na fila (caminhos para explorar)
         int t;
-        desenfileirar(Q, t);
+        desenfileirar(Q, t); // Desenfileira o primeiro vértice da fila
 
-        // Se chegamos ao destino, já podemos encerrar
-        if(t == w){
+        if(t == w) { // Se chegou ao destino
             destruirFila(Q);
             return true;
         }
 
-        // Se ainda não foi visitado, processamos
-        if(!visitados[t]){
-            visitados[t] = true;
-
-            // Adiciona todos os vizinhos não visitados
-            for(int i = 0; i < numVertices; i++){
-                if(G[t][i] == 1 && !visitados[i]){
+        if(!visitados[t]) { // Se o vértice ainda não foi visitado, é processado
+            visitados[t] = true; // Vértice marcado no vetor de visitados
+            for(int i = 0; i < numVertices; i++) { // Adiciona os vértices adjacentes não visitados na fila
+                if(G[t][i] == 1 && !visitados[i]) {
                     enfileirar(Q, i);
                 }
             }
@@ -145,7 +164,7 @@ bool existeCaminho(int u, int w, int G[][MAX_VERTICES], int numVertices){
     }
 
     destruirFila(Q);
-    return false; // Não chegamos ao destino
+    return false; // Não há caminho de u até w
 }
 
 // Retorna verdadeiro se o vértice está dentro dos limites válidos.
@@ -153,156 +172,190 @@ bool verticeExiste(int v, int numVertices) {
     return v >= 0 && v < numVertices;
 }
 
-int main() {
-    int grafo[MAX_VERTICES][MAX_VERTICES] = {{0}}; // Matriz de adjacência
-    int numVertices;
-    bool visitados[MAX_VERTICES]; // Vetor para marcar vértices visitados
-
-    // Entrada: número de vértices 
-    do {
-        cout << "Digite o número de vértices (max " << MAX_VERTICES << "): ";
-        cin >> numVertices;
-
-        if(cin.fail() || numVertices <= 0 || numVertices > MAX_VERTICES){
-            cout << "Número inválido. Tente novamente." << endl;
-            cin.clear(); // Limpa estado de erro
-            cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Descarta lixo no buffer
-        } else break;
-    } while(true);
-
-    // Inicializa a matriz com 0
-    for(int i=0; i<numVertices; i++)
-        for(int j=0; j<numVertices; j++)
-            grafo[i][j] = 0;
-
-    // Entrada: grafo direcionado ou não 
-    bool dirigido;
-    char resposta;
-    do{
-        cout << "O grafo é direcionado? (s/n): ";
-        cin >> resposta;
-        if(resposta == 's'){
-            dirigido = true;
-        } else if(resposta == 'n'){
-            dirigido = false;
-        } else {
-            cout<<"Resposta inválida"<<endl;
-        }
-    }while(resposta != 's' && resposta != 'n');
-    
-    // Entrada: número de arestas 
-    int numArestas;
-    cout << "Digite o número de arestas: ";
-    cin >> numArestas;
-
-    //  Entrada: leitura das arestas
-    cout << "Digite as arestas (u v):" << endl;
-    for(int k = 0; k < numArestas; k++){
-        int u, v;
-        cin >> u >> v;
-        u--; v--; // Ajusta para índice base 0
-
-        // Verifica validade antes de inserir
-        if(verticeExiste(u, numVertices) && verticeExiste(v, numVertices)){
-            grafo[u][v] = 1;
-            if(!dirigido) // Se não for direcionado, adiciona na outra direção também
-                grafo[v][u] = 1;
-        } else {
-            cout << "Aresta inválida! Ignorada.\n";
-            k--; // Força o usuário a digitar de novo
+// ========= FUNÇÕES AUXILIARES =========
+void inicializarGrafo(int G[][MAX_VERTICES], int numVertices) {
+    for(int i = 0; i < numVertices; i++){ 
+        for(int j = 0; j < numVertices; j++){
+            G[i][j] = 0;
         }
     }
+}
 
-    // Menu de operações 
+void lerArestas(int G[][MAX_VERTICES], int numVertices, bool dirigido) {
+    cout << "Digite as arestas (u v). Digite 0 0 para finalizar:\n";
+    while(true) {
+        int u, v;
+        cin >> u >> v;
+        if(u == 0 && v == 0) break;
+        u--; v--; // Ajusta para índice base 0
+        if(verticeExiste(u, numVertices) && verticeExiste(v, numVertices)) {
+            G[u][v] = 1;
+            if (!dirigido) G[v][u] = 1;
+        } else {
+            cout << "Aresta inválida! Digite novamente.\n";
+        }
+    }
+}
+
+
+int lerNumeroVertices() {
+    int numVertices;
+    while(true) {
+        cout << "Digite o número de vértices (max " << MAX_VERTICES << "): ";
+        cin >> numVertices;
+        if(!cin.fail() && numVertices > 0 && numVertices <= MAX_VERTICES) {
+            return numVertices;
+        }
+        cout << "Número inválido. Tente novamente.\n";
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
+}
+
+bool lerDirecionado() {
+    char resposta;
+    do {
+        cout << "O grafo é direcionado? (s/n): ";
+        cin >> resposta;
+        if(resposta == 's') return true;
+        if(resposta == 'n') return false;
+        cout << "Resposta inválida!\n";
+    } while(true);
+}
+
+int lerVertice(int numVertices, const string& prompt) {
+    int v;
+    do {
+        cout << prompt;
+        cin >> v;
+        v--;
+        if(verticeExiste(v, numVertices)) return v;
+        cout << "Vértice inválido. Tente novamente.\n";
+    } while(true);
+}
+
+int main() {
+    int grafo[MAX_VERTICES][MAX_VERTICES] = {{0}};
+    bool visitados[MAX_VERTICES];
+    int numVertices = lerNumeroVertices();
+    bool dirigido = lerDirecionado();
+    inicializarGrafo(grafo, numVertices);
+    lerArestas(grafo, numVertices, dirigido);
+    
     int opcao;
     do {
-        cout << "\n MENU \n";
+        clear();
+        cout << "\n===== MENU =====\n";
         cout << "1. DFS\n";
         cout << "2. BFS\n";
-        cout << "3. Pesquisar caminho entre dois vértices\n";
-        cout << "4. Mostrar grafo\n";
-        cout << "5. Pesquisar vértice\n";
-        cout << "6. Sair\n";
+        cout << "3. Pesquisar vértice\n";
+        cout << "4. Pesquisar caminho entre dois vértices\n";
+        cout << "5. Modificar grafo\n";
+        cout << "6. Refazer grafo\n";
+        cout << "7. Sair\n";
         cout << "Escolha: ";
         cin >> opcao;
 
-        switch(opcao){
-            case 1: {
-                // Executa DFS
-                int v;
-                cout << "Vértice inicial (1 a " << numVertices << "): ";
-                cin >> v;
-                v--; 
-                fill(visitados, visitados+numVertices, false); // Zera visitados
-                cout << "\n DFS \n";
+        switch(opcao) {
+            case 1:
+                fill(visitados, visitados+numVertices, false);
+                int v = lerVertice(numVertices, "Vértice inicial (1 a " + to_string(numVertices) + "): ");
+                cout << "\nDFS:\n";
                 DFS(v, grafo, numVertices, visitados);
-
-                // Caso o grafo seja desconexo, percorremos os outros vértices
-                for(int i = 0; i < numVertices; i++){
-                    if(!visitados[i])
-                        DFS(i, grafo, numVertices, visitados);
-                }
+                pause();
                 break;
-            }
-            case 2: {
-                // Executa BFS
-                int v;
-                cout << "Vértice inicial (1 a " << numVertices << "): ";
-                cin >> v;
-                v--; 
-                fill(visitados, visitados+numVertices, false); // Zera visitados
-                cout << "\n BFS \n";
+            
+            case 2:
+                fill(visitados, visitados+numVertices, false);
+                int v = lerVertice(numVertices, "Vértice inicial (1 a " + to_string(numVertices) + "): ");
+                cout << "\nBFS:\n";
                 BFS(v, grafo, numVertices, visitados);
-
-                // Caso o grafo seja desconexo
-                for(int i = 0; i < numVertices; i++){
-                    if(!visitados[i])
-                        BFS(i, grafo, numVertices, visitados);
-                }
+                pause();
                 break;
-            }
-            case 3: {
-                // Pesquisa caminho entre dois vértices
-                int u, w;
-                cout << "Digite os vértices origem e destino: ";
-                cin >> u >> w;
-                u--; w--;
-                if(existeCaminho(u, w, grafo, numVertices))
-                    cout << "Existe caminho de " << u+1 << " até " << w+1 << ".\n";
-                else
-                    cout << "Não existe caminho de " << u+1 << " até " << w+1 << ".\n";
+            
+            case 3:
+                int v = lerVertice(numVertices, "Digite o vértice para pesquisar (1 a " + to_string(numVertices) + "): ");
+                cout << "O vértice " << v+1 << " " << (verticeExiste(v, numVertices) ? "existe" : "não existe") << " no grafo.\n";
+                pause();
                 break;
-            }
-            case 4: {
-                // Exibe a matriz do grafo
-                cout << "\n MATRIZ DO GRAFO \n";
-                mostrarGrafo(grafo, numVertices);
+            
+            case 4:
+                int u = lerVertice(numVertices, "Digite vértice origem: ");
+                int w = lerVertice(numVertices, "Digite vértice destino: ");
+                cout << (existeCaminho(u, w, grafo, numVertices) ? "Existe" : "Não existe") << " caminho de " << u+1 << " até " << w+1 << ".\n";
+                pause();
                 break;
-            }
+            
             case 5: {
-                // Verifica se um vértice existe
-                int v;
-                cout << "Digite o vértice para pesquisar (1 a " << numVertices << "): ";
-                cin >> v;
-                v--; 
-                if(verticeExiste(v, numVertices))
-                    cout << "O vértice " << v+1 << " existe no grafo.\n";
-                else
-                    cout << "O vértice " << v+1 << " não existe no grafo.\n";
+                int subopcao;
+                cout << "\n--- Modificar Grafo ---\n";
+                cout << "1. Adicionar aresta\n";
+                cout << "2. Remover aresta\n";
+                cout << "3. Adicionar vértice\n";
+                cout << "4. Remover vértice\n";
+                cout << "Escolha: ";
+                cin >> subopcao;
+
+                if(subopcao == 1) {
+                    int u = lerVertice(numVertices, "Digite o vértice de origem: ");
+                    int v = lerVertice(numVertices, "Digite o vértice de destino: ");
+                    grafo[u][v] = 1;
+                    if(!dirigido) grafo[v][u] = 1;
+                    cout << "Aresta adicionada.\n";
+                } 
+                else if(subopcao == 2) {
+                    int u = lerVertice(numVertices, "Digite o vértice de origem: ");
+                    int v = lerVertice(numVertices, "Digite o vértice de destino: ");
+                    grafo[u][v] = 0;
+                    if(!dirigido) grafo[v][u] = 0;
+                    cout << "Aresta removida.\n";
+                }
+                else if(subopcao == 3) {
+                    if(numVertices < MAX_VERTICES) {
+                        numVertices++;
+                        for(int i = 0; i < numVertices; i++){
+                            grafo[i][numVertices-1] = 0;
+                            grafo[numVertices-1][i] = 0;
+                        }
+                        cout << "Vértice " << numVertices << " adicionado.\n";
+                    } else {
+                        cout << "Limite máximo de vértices atingido!\n";
+                    }
+                }
+                else if(subopcao == 4) {
+                    int v = lerVertice(numVertices, "Digite o vértice a remover: ");
+                    for(int i = v; i < numVertices-1; i++){
+                        for(int j = 0; j < numVertices; j++){
+                            grafo[i][j] = grafo[i+1][j];
+                            grafo[j][i] = grafo[j][i+1];
+                        }
+                    }
+                    numVertices--;
+                    cout << "Vértice removido.\n";
+                } else {
+                    cout << "Vértice inválido!\n";
+                }
+                pause();
                 break;
             }
             case 6:
+                numVertices = lerNumeroVertices();
+                dirigido = lerDirecionado();
+                inicializarGrafo(grafo, numVertices);
+                lerArestas(grafo, numVertices, dirigido);
+                cout << "Novo grafo criado!\n";
+                pause();
+                break;
+            case 7:
                 cout << "Encerrando programa.\n";
                 break;
             default:
                 cout << "Opção inválida! Tente novamente.\n";
         }
 
-    } while(opcao != 6);
-
+    } while(opcao != 7);
     return 0;
 }
-
 
 //cd Trabalho1_DFS_BFS
 //g++ trabalho1.cpp -o trabalho1.exe
