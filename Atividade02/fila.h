@@ -1,3 +1,6 @@
+#ifndef FILA_H
+#define FILA_H
+
 #include <iostream>
 using namespace std;
 
@@ -71,3 +74,4 @@ void destruirFila(Fila &fila) {
     fila.capacidade = 0;
     fila.tamanho = 0;
 }
+#endif

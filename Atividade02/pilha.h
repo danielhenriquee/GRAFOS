@@ -1,3 +1,6 @@
+#ifndef PILHA_H
+#define PILHA_H
+
 #include <iostream>
 using namespace std;
 
@@ -58,3 +61,4 @@ void destruirPilha(Pilha &pilha) {
     pilha.indiceTopo = -1;
     pilha.capacidade = 0;
 }
+#endif

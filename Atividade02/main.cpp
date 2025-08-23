@@ -251,7 +251,8 @@ int main() {
         cout << "4. Pesquisar caminho entre dois vértices\n";
         cout << "5. Modificar grafo\n";
         cout << "6. Refazer grafo\n";
-        cout << "7. Sair\n";
+        cout << "7. Mostrar grafo\n";
+        cout << "8. Sair\n";
         cout << "Escolha: ";
         cin >> opcao;
 
@@ -286,6 +287,7 @@ int main() {
                 break;
             }
             case 5: {
+                clear();
                 int subopcao;
                 cout << "\n--- Modificar Grafo ---\n";
                 cout << "1. Adicionar aresta\n";
@@ -338,6 +340,8 @@ int main() {
                 break;
             }
             case 6: {
+                clear();
+                cout << "\n--- Refazer Grafo ---\n";
                 numVertices = lerNumeroVertices();
                 dirigido = lerDirecionado();
                 inicializarGrafo(grafo, numVertices);
@@ -347,6 +351,12 @@ int main() {
                 break;
             }
             case 7: {
+                cout << "\nMatriz de adjacência:\n";
+                mostrarGrafo(grafo, numVertices);
+                pause();
+                break;
+            }
+            case 8: {
                 cout << "Encerrando programa.\n";
                 break;
             }
@@ -354,7 +364,7 @@ int main() {
                 cout << "Opção inválida! Tente novamente.\n";
         }
 
-    } while(opcao != 7);
+    } while(opcao != 8);
     return 0;
 }
 
