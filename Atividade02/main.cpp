@@ -62,19 +62,20 @@ void visitar(int v, bool visitados[], int numVertices) {
 void DFS(int v, int G[][MAX_VERTICES], int numVertices, bool visitados[]) {
     Pilha S;
     criarPilha(S, MAX_VERTICES);
-
-    visitar(v, visitados, numVertices); // Marca o vértice como visitado
     empilhar(S, v); // Empilha o vértice de origem
+    cout << "\nDFS (profundidade) a partir do vertice " << v + 1 << "\n";
 
     while (true) {
         while (!vazia(S)) { // Enquanto houver vértices na pilha
             int atual;
             desempilhar(S, atual); // Desempilha o último vértice inserido na pilha;
-
-            for (int i = numVertices - 1; i >= 0; i--) { 
-                if (G[atual][i] == 1 && !foiVisitado(i, visitados, numVertices)) { // Adiciona os vértices adjacentes não visitados na pilha
-                    visitar(i, visitados, numVertices); // Marca o vértice como visitado
-                    empilhar(S, i);
+            
+            if (!foiVisitado(atual, visitados, numVertices)) { // Verifica se o vértice já foi visitado
+                visitar(atual, visitados, numVertices); // Marca o vértice como visitado
+                for (int i = numVertices - 1; i >= 0; i--) { 
+                    if (G[atual][i] == 1 && !foiVisitado(i, visitados, numVertices)) { // Adiciona os vértices adjacentes não visitados na pilha
+                        empilhar(S, i);
+                    }
                 }
             }
         } 
@@ -83,7 +84,6 @@ void DFS(int v, int G[][MAX_VERTICES], int numVertices, bool visitados[]) {
         bool aux = false;
         for (int i = 0; i < numVertices; i++) {
             if (!visitados[i]) {
-                visitar(i, visitados, numVertices); // Marca o vértice como visitado
                 empilhar(S, i);
                 aux = true;
                 break;
@@ -101,19 +101,20 @@ void DFS(int v, int G[][MAX_VERTICES], int numVertices, bool visitados[]) {
 void BFS(int v, int G[][MAX_VERTICES], int numVertices, bool visitados[]) {
     Fila Q;
     criarFila(Q, MAX_VERTICES);
-
-    visitar(v, visitados, numVertices); // Marca o vértice como visitado
     enfileirar(Q, v); // Enfileira o vértice de origem
+    cout << "\nBFS (largura) a partir do vertice " << v + 1 << "\n";
 
     while (true) {
         while (!vazia(Q)){ // Enquanto houver vértices na fila
             int atual;
             desenfileirar(Q, atual); // Desenfileira o primeiro vértice da fila
 
-            for (int i = 0; i < numVertices; i++) {
-                if (G[atual][i] == 1 && !foiVisitado(i, visitados, numVertices)) { // Adiciona os vértices adjacentes não visitados na fila
-                    visitar(i, visitados, numVertices); // Marca o vértice como visitado
-                    enfileirar(Q, i);
+            if (!foiVisitado(atual, visitados, numVertices)) { // Verifica se o vértice já foi visitado
+                visitar(atual, visitados, numVertices); // Marca o vértice como visitado
+                for (int i = 0; i < numVertices; i++) { 
+                    if (G[atual][i] == 1 && !foiVisitado(i, visitados, numVertices)) { // Adiciona os vértices adjacentes não visitados na pilha
+                        enfileirar(Q, i);
+                    }
                 }
             }
         }
@@ -122,7 +123,6 @@ void BFS(int v, int G[][MAX_VERTICES], int numVertices, bool visitados[]) {
         bool aux = false;
         for (int i = 0; i < numVertices; i++) {
             if (!visitados[i]) {
-                visitar(i, visitados, numVertices);
                 enfileirar(Q, i);
                 aux = true;
                 break;
