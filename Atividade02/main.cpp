@@ -4,7 +4,7 @@
 #include <iostream>
 using namespace std;
 
-const int MAX_VERTICES = 10;
+const int MAX_VERTICES = 100;
 
 // Códigos de escape ANSI para cores (para exibir a matriz)
 constexpr const char* RED = "\033[31m";   // Vermelho
@@ -21,8 +21,8 @@ void clear() {
 
 void pause() {
     cout << "\nPressione ENTER para continuar...";
-    cin.ignore(); // descarta o '\n' que ficou no buffer
-    cin.get();    // espera o Enter do usuário
+    cin.ignore();
+    cin.get();
 }
 
 // Exibe a matriz de adjacência
@@ -197,7 +197,6 @@ void lerArestas(int G[][MAX_VERTICES], int numVertices, bool dirigido) {
     }
 }
 
-
 int lerNumeroVertices() {
     int numVertices;
     while(true) {
@@ -257,35 +256,35 @@ int main() {
         cin >> opcao;
 
         switch(opcao) {
-            case 1:
+            case 1: {
                 fill(visitados, visitados+numVertices, false);
                 int v = lerVertice(numVertices, "Vértice inicial (1 a " + to_string(numVertices) + "): ");
                 cout << "\nDFS:\n";
                 DFS(v, grafo, numVertices, visitados);
                 pause();
                 break;
-            
-            case 2:
+            }
+            case 2: {
                 fill(visitados, visitados+numVertices, false);
                 int v = lerVertice(numVertices, "Vértice inicial (1 a " + to_string(numVertices) + "): ");
                 cout << "\nBFS:\n";
                 BFS(v, grafo, numVertices, visitados);
                 pause();
                 break;
-            
-            case 3:
+            }
+            case 3: {
                 int v = lerVertice(numVertices, "Digite o vértice para pesquisar (1 a " + to_string(numVertices) + "): ");
                 cout << "O vértice " << v+1 << " " << (verticeExiste(v, numVertices) ? "existe" : "não existe") << " no grafo.\n";
                 pause();
                 break;
-            
-            case 4:
+            }
+            case 4: {
                 int u = lerVertice(numVertices, "Digite vértice origem: ");
                 int w = lerVertice(numVertices, "Digite vértice destino: ");
                 cout << (existeCaminho(u, w, grafo, numVertices) ? "Existe" : "Não existe") << " caminho de " << u+1 << " até " << w+1 << ".\n";
                 pause();
                 break;
-            
+            }
             case 5: {
                 int subopcao;
                 cout << "\n--- Modificar Grafo ---\n";
@@ -338,7 +337,7 @@ int main() {
                 pause();
                 break;
             }
-            case 6:
+            case 6: {
                 numVertices = lerNumeroVertices();
                 dirigido = lerDirecionado();
                 inicializarGrafo(grafo, numVertices);
@@ -346,9 +345,11 @@ int main() {
                 cout << "Novo grafo criado!\n";
                 pause();
                 break;
-            case 7:
+            }
+            case 7: {
                 cout << "Encerrando programa.\n";
                 break;
+            }
             default:
                 cout << "Opção inválida! Tente novamente.\n";
         }
