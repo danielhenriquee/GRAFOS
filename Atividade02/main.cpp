@@ -1,3 +1,9 @@
+/*
+cd Atividade02
+g++ main.cpp -o grafos
+./grafos
+*/
+
 #include "pilha.h"
 #include "fila.h"
 #include <limits>
@@ -186,7 +192,7 @@ void lerArestas(int G[][MAX_VERTICES], int numVertices, bool dirigido) {
     while(true) {
         int u, v;
         cin >> u >> v;
-        if(u == 0 && v == 0) break;
+        if(u == 0 || v == 0) break;
         u--; v--; // Ajusta para índice base 0
         if(verticeExiste(u, numVertices) && verticeExiste(v, numVertices)) {
             G[u][v] = 1;
@@ -228,7 +234,8 @@ int lerVertice(int numVertices, const string& prompt) {
         cout << prompt;
         cin >> v;
         v--;
-        if(verticeExiste(v, numVertices)) return v;
+        if(verticeExiste(v, numVertices)) 
+            return v;
         cout << "Vértice inválido. Tente novamente.\n";
     } while(true);
 }
@@ -244,6 +251,8 @@ int main() {
     int opcao;
     do {
         clear();
+        cout << "\nMatriz de adjacência:\n";
+        mostrarGrafo(grafo, numVertices);
         cout << "\n===== MENU =====\n";
         cout << "1. DFS\n";
         cout << "2. BFS\n";
@@ -257,37 +266,56 @@ int main() {
         cin >> opcao;
 
         switch(opcao) {
-            case 1: {
+            case 1: { // DFS
                 fill(visitados, visitados+numVertices, false);
-                int v = lerVertice(numVertices, "Vértice inicial (1 a " + to_string(numVertices) + "): ");
-                cout << "\nDFS:\n";
+                cout << "\nDigite o vertice inicial para o DFS (1 a " << maxV <<"): ";
+                int v;
+                cin >> v;
+                while (v < 1 || v >= numVertices) {
+                    cout << "Valor invalido. Tente novamente: ";
+                    cin >> v;
+                }
                 DFS(v, grafo, numVertices, visitados);
                 pause();
                 break;
             }
-            case 2: {
+            case 2: { // BFS
                 fill(visitados, visitados+numVertices, false);
-                int v = lerVertice(numVertices, "Vértice inicial (1 a " + to_string(numVertices) + "): ");
-                cout << "\nBFS:\n";
+                cout << "\nDigite o vertice inicial para o BFS (1 a " << maxV <<"): ";
+                int v;
+                cin >> v;
+                while (v < 1 || v >= numVertices) {
+                    cout << "Valor invalido. Tente novamente: ";
+                    cin >> v;
+                }
                 BFS(v, grafo, numVertices, visitados);
                 pause();
                 break;
             }
-            case 3: {
-                int v = lerVertice(numVertices, "Digite o vértice para pesquisar (1 a " + to_string(numVertices) + "): ");
-                cout << "O vértice " << v+1 << " " << (verticeExiste(v, numVertices) ? "existe" : "não existe") << " no grafo.\n";
+            case 3: { // PESQUISAR VÉRTICE
+                int v;
+                cout << "Digite o vértice que deseja pesquisar: ";
+                cin >> v;
+                if (v >= 1 && v <= numVertices)
+                    cout << "O vertice " << v << " existe no grafo.\n";
+                else
+                    cout << "O vertice " << v << " nao existe no grafo.\n";
                 pause();
                 break;
             }
-            case 4: {
-                int u = lerVertice(numVertices, "Digite vértice origem: ");
-                int w = lerVertice(numVertices, "Digite vértice destino: ");
-                cout << (existeCaminho(u, w, grafo, numVertices) ? "Existe" : "Não existe") << " caminho de " << u+1 << " até " << w+1 << ".\n";
+            case 4: { // FECHO TRANSITIVO DIRETO
                 pause();
                 break;
             }
-            case 5: {
-                clear();
+            case 5: { // FECHO TRANSITIVO INVERSO
+                pause();
+                break;
+            }
+            case 6: { // CONEXIVIDADE
+                pause();
+                break;
+            }
+            case 7: { // MODIFICAR GRAFO
                 int subopcao;
                 cout << "\n--- Modificar Grafo ---\n";
                 cout << "1. Adicionar aresta\n";
@@ -339,7 +367,7 @@ int main() {
                 pause();
                 break;
             }
-            case 6: {
+            case 8: { // REFAZER GRAFO
                 clear();
                 cout << "\n--- Refazer Grafo ---\n";
                 numVertices = lerNumeroVertices();
@@ -350,13 +378,7 @@ int main() {
                 pause();
                 break;
             }
-            case 7: {
-                cout << "\nMatriz de adjacência:\n";
-                mostrarGrafo(grafo, numVertices);
-                pause();
-                break;
-            }
-            case 8: {
+            case 9: { // SAIR
                 cout << "Encerrando programa.\n";
                 break;
             }
@@ -367,7 +389,3 @@ int main() {
     } while(opcao != 8);
     return 0;
 }
-
-//cd Trabalho1_DFS_BFS
-//g++ trabalho1.cpp -o trabalho1.exe
-//./trabalho1.exe
