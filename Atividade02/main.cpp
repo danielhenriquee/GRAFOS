@@ -46,7 +46,7 @@ void mostrarGrafo(int G[][MAX_VERTICES], int numVertices) {
 }
 
 // Retorna "true" se o vértice já foi visitado. Se o índice for inválido, emite um aviso e retorna "true" para evitar acessos fora do vetor.
-bool foiVisitado(int v, bool visitados[], int numVertices) {
+bool foiVisitado(int v, int visitados[], int numVertices) {
     if (v < 0 || v >= numVertices) {
         cout << "Aviso: vértice inválido acessado!\n";
         return true; 
@@ -55,17 +55,17 @@ bool foiVisitado(int v, bool visitados[], int numVertices) {
 }
 
 // Marca o vértice como visitado e imprime a ação.
-void visitar(int v, bool visitados[], int numVertices) {
+void visitar(int v, int visitados[], int numVertices) {
     if (v < 0 || v >= numVertices) {
         cout << "Vértice inválido!\n";
         return;
     }
     cout << "Visitando: " << v+1 << endl;
-    visitados[v] = true;
+    visitados[v] = 1;
 }
 
 // Função: DFS (busca em profundidade)
-void DFS(int v, int G[][MAX_VERTICES], int numVertices, bool visitados[]) {
+void DFS(int v, int G[][MAX_VERTICES], int numVertices, int visitados[]) {
     Pilha S;
     criarPilha(S, MAX_VERTICES);
     empilhar(S, v); // Empilha o vértice de origem
@@ -91,7 +91,7 @@ void DFS(int v, int G[][MAX_VERTICES], int numVertices, bool visitados[]) {
         for (int i = 0; i < numVertices; i++) {
             if (!visitados[i]) {
                 empilhar(S, i);
-                aux = true;
+                aux = 1;
                 break;
             }
         }
@@ -104,7 +104,7 @@ void DFS(int v, int G[][MAX_VERTICES], int numVertices, bool visitados[]) {
 }
 
 // Função: BFS (busca em largura)
-void BFS(int v, int G[][MAX_VERTICES], int numVertices, bool visitados[]) {
+void BFS(int v, int G[][MAX_VERTICES], int numVertices, int visitados[]) {
     Fila Q;
     criarFila(Q, MAX_VERTICES);
     enfileirar(Q, v); // Enfileira o vértice de origem
@@ -130,7 +130,7 @@ void BFS(int v, int G[][MAX_VERTICES], int numVertices, bool visitados[]) {
         for (int i = 0; i < numVertices; i++) {
             if (!visitados[i]) {
                 enfileirar(Q, i);
-                aux = true;
+                aux = 1;
                 break;
             }
         }
@@ -142,35 +142,23 @@ void BFS(int v, int G[][MAX_VERTICES], int numVertices, bool visitados[]) {
     }
 }
 
-// Verifica se existe caminho entre dois vértices (u -> w) usando BFS
-bool existeCaminho(int u, int w, int G[][MAX_VERTICES], int numVertices) {
-    bool visitados[MAX_VERTICES] = {false}; // Marca os vértices visitados
+void FTD(int v, int G[][MAX_VERTICES], int numVertices, int visitados[]) {
     Fila Q;
-    criarFila(Q, numVertices);
-    enfileirar(Q, u); // Enfileira o vértice de origem
-
-    
-    while(!vazia(Q)) { // Enquanto houver vértices na fila (caminhos para explorar)
-        int t;
-        desenfileirar(Q, t); // Desenfileira o primeiro vértice da fila
-
-        if(t == w) { // Se chegou ao destino
-            destruirFila(Q);
-            return true;
-        }
-
-        if(!visitados[t]) { // Se o vértice ainda não foi visitado, é processado
-            visitados[t] = true; // Vértice marcado no vetor de visitados
-            for(int i = 0; i < numVertices; i++) { // Adiciona os vértices adjacentes não visitados na fila
-                if(G[t][i] == 1 && !visitados[i]) {
-                    enfileirar(Q, i);
-                }
+    criarFila(Q, MAX_VERTICES);
+    enfileirar(Q, v); // Enfileira o vértice de origem
+    cout << "\nFecho trasitivo direto do vertice " << v + 1 << "\n";
+    int distancia = 0;
+    while () {
+        for (int i = 0; i < numVertices; i++) {
+            if (G[v][i] == 0 && v != i ) {
+                enfileirar(Q, i);
+                visitados[i] = distancia + 1;
             }
         }
-    }
+        
 
-    destruirFila(Q);
-    return false; // Não há caminho de u até w
+    } 
+    
 }
 
 // Retorna verdadeiro se o vértice está dentro dos limites válidos.
@@ -228,7 +216,7 @@ bool lerDirecionado() {
     } while(true);
 }
 
-int lerVertice(int numVertices, const string& prompt) {
+int lerVertice(int numVertices, string prompt) {
     int v;
     do {
         cout << prompt;
@@ -242,7 +230,7 @@ int lerVertice(int numVertices, const string& prompt) {
 
 int main() {
     int grafo[MAX_VERTICES][MAX_VERTICES] = {{0}};
-    bool visitados[MAX_VERTICES];
+    int visitados[MAX_VERTICES];
     int numVertices = lerNumeroVertices();
     bool dirigido = lerDirecionado();
     inicializarGrafo(grafo, numVertices);
@@ -257,38 +245,39 @@ int main() {
         cout << "1. DFS\n";
         cout << "2. BFS\n";
         cout << "3. Pesquisar vértice\n";
-        cout << "4. Pesquisar caminho entre dois vértices\n";
-        cout << "5. Modificar grafo\n";
-        cout << "6. Refazer grafo\n";
-        cout << "7. Mostrar grafo\n";
-        cout << "8. Sair\n";
+        cout << "4. Fecho transitivo direto de um vértice\n";
+        cout << "5. Fecho transitivo inverso de um vértice\n";
+        cout << "6. Conexividade\n";
+        cout << "7. Modificar grafo\n";
+        cout << "8. Refazer grafo\n";
+        cout << "9. Sair\n";
         cout << "Escolha: ";
         cin >> opcao;
 
         switch(opcao) {
             case 1: { // DFS
                 fill(visitados, visitados+numVertices, false);
-                cout << "\nDigite o vertice inicial para o DFS (1 a " << maxV <<"): ";
+                cout << "\nDigite o vertice inicial para o DFS (1 a " << numVertices <<"): ";
                 int v;
                 cin >> v;
-                while (v < 1 || v >= numVertices) {
+                while (v < 1 || v > numVertices) {
                     cout << "Valor invalido. Tente novamente: ";
                     cin >> v;
                 }
-                DFS(v, grafo, numVertices, visitados);
+                DFS(v-1, grafo, numVertices, visitados);
                 pause();
                 break;
             }
             case 2: { // BFS
                 fill(visitados, visitados+numVertices, false);
-                cout << "\nDigite o vertice inicial para o BFS (1 a " << maxV <<"): ";
+                cout << "\nDigite o vertice inicial para o BFS (1 a " << numVertices <<"): ";
                 int v;
                 cin >> v;
-                while (v < 1 || v >= numVertices) {
+                while (v < 1 || v > numVertices) {
                     cout << "Valor invalido. Tente novamente: ";
                     cin >> v;
                 }
-                BFS(v, grafo, numVertices, visitados);
+                BFS(v-1, grafo, numVertices, visitados);
                 pause();
                 break;
             }
@@ -386,6 +375,6 @@ int main() {
                 cout << "Opção inválida! Tente novamente.\n";
         }
 
-    } while(opcao != 8);
+    } while(opcao != 9);
     return 0;
 }
