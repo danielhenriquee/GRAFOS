@@ -54,17 +54,7 @@ bool foiVisitado(int v, int visitados[], int numVertices) {
     return visitados[v];
 }
 
-// Marca o vértice como visitado e imprime a ação.
-void visitar(int v, int visitados[], int numVertices) {
-    if (v < 0 || v >= numVertices) {
-        cout << "Vértice inválido!\n";
-        return;
-    }
-    cout << "Visitando: " << v+1 << endl;
-    visitados[v] = 1;
-}
-
-// Função: DFS (busca em profundidade)
+// DFS (busca em profundidade)
 void DFS(int v, int G[][MAX_VERTICES], int numVertices, int visitados[]) {
     Pilha S;
     criarPilha(S, MAX_VERTICES);
@@ -77,7 +67,8 @@ void DFS(int v, int G[][MAX_VERTICES], int numVertices, int visitados[]) {
             desempilhar(S, atual); // Desempilha o último vértice inserido na pilha;
             
             if (!foiVisitado(atual, visitados, numVertices)) { // Verifica se o vértice já foi visitado
-                visitar(atual, visitados, numVertices); // Marca o vértice como visitado
+                visitados[atual] = true; // Marca o vértice como visitado
+                cout << "Visitando: " << atual + 1 << endl;
                 for (int i = numVertices - 1; i >= 0; i--) { 
                     if (G[atual][i] == 1 && !foiVisitado(i, visitados, numVertices)) { // Adiciona os vértices adjacentes não visitados na pilha
                         empilhar(S, i);
@@ -103,7 +94,7 @@ void DFS(int v, int G[][MAX_VERTICES], int numVertices, int visitados[]) {
     }
 }
 
-// Função: BFS (busca em largura)
+// BFS (busca em largura)
 void BFS(int v, int G[][MAX_VERTICES], int numVertices, int visitados[]) {
     Fila Q;
     criarFila(Q, MAX_VERTICES);
@@ -116,7 +107,8 @@ void BFS(int v, int G[][MAX_VERTICES], int numVertices, int visitados[]) {
             desenfileirar(Q, atual); // Desenfileira o primeiro vértice da fila
 
             if (!foiVisitado(atual, visitados, numVertices)) { // Verifica se o vértice já foi visitado
-                visitar(atual, visitados, numVertices); // Marca o vértice como visitado
+                visitados[atual] = true; // Marca o vértice como visitado
+                cout << "Visitando: " << atual + 1 << endl;
                 for (int i = 0; i < numVertices; i++) { 
                     if (G[atual][i] == 1 && !foiVisitado(i, visitados, numVertices)) { // Adiciona os vértices adjacentes não visitados na pilha
                         enfileirar(Q, i);
@@ -142,7 +134,7 @@ void BFS(int v, int G[][MAX_VERTICES], int numVertices, int visitados[]) {
     }
 }
 
-// Função: Fecho Transitivo Direto
+// Fecho Transitivo Direto do vértice
 void FTD(int v, int G[][MAX_VERTICES], int numVertices, int visitados[]) {
     Fila Q;
     criarFila(Q, MAX_VERTICES);
@@ -167,7 +159,7 @@ void FTD(int v, int G[][MAX_VERTICES], int numVertices, int visitados[]) {
     destruirFila(Q);
 }
 
-// Função: Fecho Transitivo Inverso
+// Fecho Transitivo Inverso do vértice
 void FTI(int v, int G[][MAX_VERTICES], int numVertices, int visitados[]) {
     Fila Q;
     criarFila(Q, MAX_VERTICES);
@@ -198,7 +190,7 @@ bool verticeExiste(int v, int numVertices) {
     return v >= 0 && v < numVertices;
 }
 
-// Função: Verificar Conectividade Forte
+// Verifica a conectividade do grafo
 void conectividade(int G[][MAX_VERTICES], int numVertices, int visitados[]) {
     // Testa FTD do vértice 0
     fill(visitados, visitados + numVertices, false);
@@ -227,15 +219,13 @@ void conectividade(int G[][MAX_VERTICES], int numVertices, int visitados[]) {
     if (todosFTD && todosFTI) { // Se é fortemente conexo
         cout << "\nO grafo e fortemente conexo!\n";
     } else {
-        cout << "\nO grafo nao e fortemente conexo.\n";
-        cout << "Fechos transitivos diretos (FTD) de cada vertice:\n";
-        for (int v = 0; v < numVertices; v++) {
-            fill(visitados, visitados + numVertices, false);
-            FTD(v, G, numVertices, visitados);
-        }
+        subgrafosFCM();
     }
 }
 
+// Encontra os subgrafos Fortemente Conexos Máximos
+void subgrafosFCM(int G[][MAX_VERTICES], int numVertices, int visitados[]) {
+}
 
 // ========= FUNÇÕES AUXILIARES =========
 void inicializarGrafo(int G[][MAX_VERTICES], int numVertices) {
