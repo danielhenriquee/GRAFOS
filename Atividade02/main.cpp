@@ -198,6 +198,45 @@ bool verticeExiste(int v, int numVertices) {
     return v >= 0 && v < numVertices;
 }
 
+// Função: Verificar Conectividade Forte
+void conectividade(int G[][MAX_VERTICES], int numVertices, int visitados[]) {
+    // Testa FTD do vértice 0
+    fill(visitados, visitados + numVertices, false);
+    FTD(0, G, numVertices, visitados);
+
+    bool todosFTD = true; // Assume que passou por todos os vértices do grafo
+    for (int i = 0; i < numVertices; i++) { // Verifica
+        if (!visitados[i]) {
+            todosFTD = false; // Se não passou por algum -> false
+            break;
+        }
+    }
+
+    // Testa FTI do vértice 0
+    fill(visitados, visitados + numVertices, false);
+    FTI(0, G, numVertices, visitados);
+
+    bool todosFTI = true; // Assume que passou por todos os vértices do grafo
+    for (int i = 0; i < numVertices; i++) {
+        if (!visitados[i]) {
+            todosFTI = false; // Se não passou por algum -> false
+            break;
+        }
+    }
+
+    if (todosFTD && todosFTI) { // Se é fortemente conexo
+        cout << "\nO grafo e fortemente conexo!\n";
+    } else {
+        cout << "\nO grafo nao e fortemente conexo.\n";
+        cout << "Fechos transitivos diretos (FTD) de cada vertice:\n";
+        for (int v = 0; v < numVertices; v++) {
+            fill(visitados, visitados + numVertices, false);
+            FTD(v, G, numVertices, visitados);
+        }
+    }
+}
+
+
 // ========= FUNÇÕES AUXILIARES =========
 void inicializarGrafo(int G[][MAX_VERTICES], int numVertices) {
     for(int i = 0; i < numVertices; i++){ 
@@ -326,19 +365,32 @@ int main() {
             }
             case 4: { // FECHO TRANSITIVO DIRETO
                 fill(visitados, visitados+numVertices, false);
-                int v = lerVertice(numVertices, "\nDigite o vertice para o FTD (1 a " + to_string(numVertices) + "): ");
-                FTD(v, grafo, numVertices, visitados);
+                cout << "\nDigite o vertice inicial para o FTD (1 a " << numVertices <<"): ";
+                int v;
+                cin >> v;
+                while (v < 1 || v > numVertices) {
+                    cout << "Valor invalido. Tente novamente: ";
+                    cin >> v;
+                }
+                FTD(v-1, grafo, numVertices, visitados);
                 pause();
                 break;
             }
             case 5: { // FECHO TRANSITIVO INVERSO
                 fill(visitados, visitados+numVertices, false);
-                int v = lerVertice(numVertices, "\nDigite o vertice para o FTI (1 a " + to_string(numVertices) + "): ");
+                cout << "\nDigite o vertice inicial para o FTI (1 a " << numVertices <<"): ";
+                int v;
+                cin >> v;
+                while (v < 1 || v > numVertices) {
+                    cout << "Valor invalido. Tente novamente: ";
+                    cin >> v;
+                }
                 FTI(v, grafo, numVertices, visitados);
                 pause();
                 break;
             }
             case 6: { // CONEXIVIDADE
+                FTI(grafo, numVertices, visitados);
                 pause();
                 break;
             }
