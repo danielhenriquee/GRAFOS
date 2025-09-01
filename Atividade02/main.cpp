@@ -136,12 +136,11 @@ void BFS(int v, int G[][MAX_VERTICES], int numVertices, int visitados[]) {
 
 // Fecho Transitivo Direto do vértice
 void FTD(int v, int G[][MAX_VERTICES], int numVertices, int visitados[]) {
+    fill(visitados, visitados+numVertices, false);
     Fila Q;
     criarFila(Q, MAX_VERTICES);
     enfileirar(Q, v); 
-
-    cout << "\nFecho transitivo direto do vértice " << v + 1 << ":\n";
-    visitados[v] = true; 
+    visitados[v] = true;
 
     while (!vazia(Q)) {
         int atual;
@@ -149,23 +148,32 @@ void FTD(int v, int G[][MAX_VERTICES], int numVertices, int visitados[]) {
 
         for (int i = 0; i < numVertices; i++) {
             if (G[atual][i] == 1 && !visitados[i]) {
-                cout << "Alcançável: " << i + 1 << endl;
                 visitados[i] = true;
                 enfileirar(Q, i);
             }
         }
     }
-
     destruirFila(Q);
+}
+
+// Chama a função que processa, esta apenas imprime
+void FTD_show(int v, int G[][MAX_VERTICES], int numVertices, int visitados[]) {
+    FTD(v, G, numVertices, visitados);
+
+    cout << "\nFecho transitivo direto do vértice " << v + 1 << ":\n";
+    for (int i = 0; i < numVertices; i++) {
+        if (i != v && visitados[i]) {
+            cout << "Alcançável: " << i+1 << endl;
+        }
+    }
 }
 
 // Fecho Transitivo Inverso do vértice
 void FTI(int v, int G[][MAX_VERTICES], int numVertices, int visitados[]) {
+    fill(visitados, visitados+numVertices, false);
     Fila Q;
     criarFila(Q, MAX_VERTICES);
     enfileirar(Q, v); 
-
-    cout << "\nFecho transitivo inverso do vértice " << v + 1 << ":\n";
     visitados[v] = true; 
 
     while (!vazia(Q)) {
@@ -173,16 +181,25 @@ void FTI(int v, int G[][MAX_VERTICES], int numVertices, int visitados[]) {
         desenfileirar(Q, atual);
 
         for (int i = 0; i < numVertices; i++) {
-            // Aqui a diferença: olhamos arestas que chegam em "atual"
             if (G[i][atual] == 1 && !visitados[i]) {
-                cout << "Pode alcançar " << v + 1 << ": " << i + 1 << endl;
                 visitados[i] = true;
                 enfileirar(Q, i);
             }
         }
     }
-
     destruirFila(Q);
+}
+
+// Chama a função que processa, esta apenas imprime
+void FTI_show(int v, int G[][MAX_VERTICES], int numVertices, int visitados[]) {
+    FTI(v, G, numVertices, visitados);
+
+    cout << "\nFecho transitivo inverso do vértice " << v + 1 << ":\n";
+    for (int i = 0; i < numVertices; i++) {
+        if (i != v && visitados[i]) {
+            cout << "Pode alcançar " << v+1 << ": " << i+1 << endl;
+        }
+    }
 }
 
 // Retorna verdadeiro se o vértice está dentro dos limites válidos.
@@ -190,12 +207,68 @@ bool verticeExiste(int v, int numVertices) {
     return v >= 0 && v < numVertices;
 }
 
+// Encontra os subgrafos Fortemente Conexos Máximos
+void subgrafosFCM(int G[][MAX_VERTICES], int numVertices) {
+    bool processados[MAX_VERTICES] = {false}; // marca os vértices já atribuídos a algum componente
+
+    cout << "\nSubgrafos Fortemente Conexos Máximos:\n";
+
+    for (int v = 0; v < numVertices; v++) {
+        if (!processados[v]) {
+            // Calcula FTD(v)
+            bool ftd[MAX_VERTICES] = {false};
+            Fila filaFTD;
+            criarFila(filaFTD, MAX_VERTICES);
+            enfileirar(filaFTD, v);
+            ftd[v] = true;
+            while (!vazia(filaFTD)) {
+                int atual;
+                desenfileirar(filaFTD, atual);
+                for (int i = 0; i < numVertices; i++) {
+                    if (G[atual][i] == 1 && !ftd[i]) {
+                        ftd[i] = true;
+                        enfileirar(filaFTD, i);
+                    }
+                }
+            }
+            destruirFila(filaFTD);
+
+            // Calcula FTI(v)
+            bool fti[MAX_VERTICES] = {false};
+            Fila filaFTI;
+            criarFila(filaFTI, MAX_VERTICES);
+            enfileirar(filaFTI, v);
+            fti[v] = true;
+            while (!vazia(filaFTI)) {
+                int atual;
+                desenfileirar(filaFTI, atual);
+                for (int i = 0; i < numVertices; i++) {
+                    if (G[i][atual] == 1 && !fti[i]) {
+                        fti[i] = true;
+                        enfileirar(filaFTI, i);
+                    }
+                }
+            }
+            destruirFila(filaFTI);
+
+            // Interseção FTD ∩ FTI
+            cout << "{ ";
+            for (int i = 0; i < numVertices; i++) {
+                if (ftd[i] && fti[i]) {
+                    cout << i+1 << " ";
+                    processados[i] = true;
+                }
+            }
+            cout << "}\n";
+        }
+    }
+}
+
 // Verifica a conectividade do grafo
 void conectividade(int G[][MAX_VERTICES], int numVertices, int visitados[]) {
     // Testa FTD do vértice 0
     fill(visitados, visitados + numVertices, false);
     FTD(0, G, numVertices, visitados);
-
     bool todosFTD = true; // Assume que passou por todos os vértices do grafo
     for (int i = 0; i < numVertices; i++) { // Verifica
         if (!visitados[i]) {
@@ -207,7 +280,6 @@ void conectividade(int G[][MAX_VERTICES], int numVertices, int visitados[]) {
     // Testa FTI do vértice 0
     fill(visitados, visitados + numVertices, false);
     FTI(0, G, numVertices, visitados);
-
     bool todosFTI = true; // Assume que passou por todos os vértices do grafo
     for (int i = 0; i < numVertices; i++) {
         if (!visitados[i]) {
@@ -219,12 +291,8 @@ void conectividade(int G[][MAX_VERTICES], int numVertices, int visitados[]) {
     if (todosFTD && todosFTI) { // Se é fortemente conexo
         cout << "\nO grafo e fortemente conexo!\n";
     } else {
-        subgrafosFCM();
+        subgrafosFCM(G, numVertices);
     }
-}
-
-// Encontra os subgrafos Fortemente Conexos Máximos
-void subgrafosFCM(int G[][MAX_VERTICES], int numVertices, int visitados[]) {
 }
 
 // ========= FUNÇÕES AUXILIARES =========
@@ -308,7 +376,7 @@ int main() {
         cout << "3. Pesquisar vértice\n";
         cout << "4. Fecho transitivo direto de um vértice\n";
         cout << "5. Fecho transitivo inverso de um vértice\n";
-        cout << "6. Conexividade\n";
+        cout << "6. Conectividade\n";
         cout << "7. Modificar grafo\n";
         cout << "8. Refazer grafo\n";
         cout << "9. Sair\n";
@@ -354,7 +422,6 @@ int main() {
                 break;
             }
             case 4: { // FECHO TRANSITIVO DIRETO
-                fill(visitados, visitados+numVertices, false);
                 cout << "\nDigite o vertice inicial para o FTD (1 a " << numVertices <<"): ";
                 int v;
                 cin >> v;
@@ -362,12 +429,11 @@ int main() {
                     cout << "Valor invalido. Tente novamente: ";
                     cin >> v;
                 }
-                FTD(v-1, grafo, numVertices, visitados);
+                FTD_show(v-1, grafo, numVertices, visitados);
                 pause();
                 break;
             }
             case 5: { // FECHO TRANSITIVO INVERSO
-                fill(visitados, visitados+numVertices, false);
                 cout << "\nDigite o vertice inicial para o FTI (1 a " << numVertices <<"): ";
                 int v;
                 cin >> v;
@@ -375,12 +441,12 @@ int main() {
                     cout << "Valor invalido. Tente novamente: ";
                     cin >> v;
                 }
-                FTI(v, grafo, numVertices, visitados);
+                FTI_show(v-1, grafo, numVertices, visitados);
                 pause();
                 break;
             }
-            case 6: { // CONEXIVIDADE
-                FTI(grafo, numVertices, visitados);
+            case 6: { // CONECTIVIDADE
+                conectividade(grafo, numVertices, visitados);
                 pause();
                 break;
             }
