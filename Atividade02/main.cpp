@@ -142,23 +142,55 @@ void BFS(int v, int G[][MAX_VERTICES], int numVertices, int visitados[]) {
     }
 }
 
+// Função: Fecho Transitivo Direto
 void FTD(int v, int G[][MAX_VERTICES], int numVertices, int visitados[]) {
     Fila Q;
     criarFila(Q, MAX_VERTICES);
-    enfileirar(Q, v); // Enfileira o vértice de origem
-    cout << "\nFecho trasitivo direto do vertice " << v + 1 << "\n";
-    int distancia = 0;
-    while () {
+    enfileirar(Q, v); 
+
+    cout << "\nFecho transitivo direto do vértice " << v + 1 << ":\n";
+    visitados[v] = true; 
+
+    while (!vazia(Q)) {
+        int atual;
+        desenfileirar(Q, atual);
+
         for (int i = 0; i < numVertices; i++) {
-            if (G[v][i] == 0 && v != i ) {
+            if (G[atual][i] == 1 && !visitados[i]) {
+                cout << "Alcançável: " << i + 1 << endl;
+                visitados[i] = true;
                 enfileirar(Q, i);
-                visitados[i] = distancia + 1;
             }
         }
-        
+    }
 
-    } 
-    
+    destruirFila(Q);
+}
+
+// Função: Fecho Transitivo Inverso
+void FTI(int v, int G[][MAX_VERTICES], int numVertices, int visitados[]) {
+    Fila Q;
+    criarFila(Q, MAX_VERTICES);
+    enfileirar(Q, v); 
+
+    cout << "\nFecho transitivo inverso do vértice " << v + 1 << ":\n";
+    visitados[v] = true; 
+
+    while (!vazia(Q)) {
+        int atual;
+        desenfileirar(Q, atual);
+
+        for (int i = 0; i < numVertices; i++) {
+            // Aqui a diferença: olhamos arestas que chegam em "atual"
+            if (G[i][atual] == 1 && !visitados[i]) {
+                cout << "Pode alcançar " << v + 1 << ": " << i + 1 << endl;
+                visitados[i] = true;
+                enfileirar(Q, i);
+            }
+        }
+    }
+
+    destruirFila(Q);
 }
 
 // Retorna verdadeiro se o vértice está dentro dos limites válidos.
@@ -293,10 +325,16 @@ int main() {
                 break;
             }
             case 4: { // FECHO TRANSITIVO DIRETO
+                fill(visitados, visitados+numVertices, false);
+                int v = lerVertice(numVertices, "\nDigite o vertice para o FTD (1 a " + to_string(numVertices) + "): ");
+                FTD(v, grafo, numVertices, visitados);
                 pause();
                 break;
             }
             case 5: { // FECHO TRANSITIVO INVERSO
+                fill(visitados, visitados+numVertices, false);
+                int v = lerVertice(numVertices, "\nDigite o vertice para o FTI (1 a " + to_string(numVertices) + "): ");
+                FTI(v, grafo, numVertices, visitados);
                 pause();
                 break;
             }
