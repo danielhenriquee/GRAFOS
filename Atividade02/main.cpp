@@ -266,6 +266,11 @@ void subgrafosFCM(int G[][MAX_VERTICES], int numVertices) {
 
 // Verifica a conectividade do grafo
 void conectividade(int G[][MAX_VERTICES], int numVertices, int visitados[]) {
+    if (numVertices == 0) { 
+        cout << "O grafo esta vazio.\n"; 
+        return;
+    }
+
     // Testa FTD do vértice 0
     fill(visitados, visitados + numVertices, false);
     FTD(0, G, numVertices, visitados);
@@ -323,7 +328,7 @@ void lerArestas(int G[][MAX_VERTICES], int numVertices, bool dirigido) {
 int lerNumeroVertices() {
     int numVertices;
     while(true) {
-        cout << "Digite o número de vértices (max " << MAX_VERTICES << "): ";
+        cout << "Digite o número de vértices (max " << MAX_VERTICES <<"): ";
         cin >> numVertices;
         if(!cin.fail() && numVertices > 0 && numVertices <= MAX_VERTICES) {
             return numVertices;
@@ -412,7 +417,7 @@ int main() {
             }
             case 3: { // PESQUISAR VÉRTICE
                 int v;
-                cout << "Digite o vértice que deseja pesquisar: ";
+                cout << "Digite o vértice de origem (1 até " << numVertices <<"): ";
                 cin >> v;
                 if (v >= 1 && v <= numVertices)
                     cout << "O vertice " << v << " existe no grafo.\n";
