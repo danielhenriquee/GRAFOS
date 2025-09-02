@@ -32,8 +32,22 @@ void pause() {
 }
 
 // Exibe a matriz de adjacência
+// Exibe a matriz de adjacência com indices e bordas
 void mostrarGrafo(int G[][MAX_VERTICES], int numVertices) {
+    // Cabeçalho com índices das colunas
+    cout << "     ";
+    for(int j = 0; j < numVertices; j++) {
+        cout << j+1 << " ";
+    }
+    cout << "\n   +";
+    for(int j = 0; j < numVertices; j++) {
+        cout << "--";
+    }
+    cout << "-+\n";
+
+    // Linhas da matriz com índices
     for(int i = 0; i < numVertices; i++) {
+        cout << (i+1 < 10 ? " " : "") << i+1 << " | "; // índice da linha
         for(int j = 0; j < numVertices; j++) {
             if (G[i][j] == 0) {
                 cout << RED << G[i][j] << RESET << " ";
@@ -41,8 +55,15 @@ void mostrarGrafo(int G[][MAX_VERTICES], int numVertices) {
                 cout << GREEN << G[i][j] << RESET << " ";
             }
         }
-        cout << "\n";
+        cout << "|\n";
     }
+
+    // Rodapé da matriz
+    cout << "   +";
+    for(int j = 0; j < numVertices; j++) {
+        cout << "--";
+    }
+    cout << "-+\n";
 }
 
 // Retorna "true" se o vertice ja foi visitado. Se o índice for invalido, emite um aviso e retorna "true" para evitar acessos fora do vetor.
@@ -136,19 +157,19 @@ void BFS(int v, int G[][MAX_VERTICES], int numVertices, int visitados[]) {
 
 // Fecho Transitivo Direto do vertice
 void FTD(int v, int G[][MAX_VERTICES], int numVertices, int visitados[]) {
-    fill(visitados, visitados+numVertices, false);
+    fill(visitados, visitados+numVertices, -1); // -1 = nao visitado
     Fila Q;
     criarFila(Q, MAX_VERTICES);
     enfileirar(Q, v); 
-    visitados[v] = true;
+    visitados[v] = 0;
 
     while (!vazia(Q)) {
         int atual;
         desenfileirar(Q, atual);
 
         for (int i = 0; i < numVertices; i++) {
-            if (G[atual][i] == 1 && !visitados[i]) {
-                visitados[i] = true;
+            if (G[atual][i] == 1 && visitados[i] == -1) { // Não visitados
+                visitados[i] = visitados[atual] + 1;
                 enfileirar(Q, i);
             }
         }
@@ -162,27 +183,27 @@ void FTD_show(int v, int G[][MAX_VERTICES], int numVertices, int visitados[]) {
 
     cout << "\nFecho transitivo direto do vertice " << v + 1 << ":\n";
     for (int i = 0; i < numVertices; i++) {
-        if (i != v && visitados[i]) {
-            cout << "Alcançavel: " << i+1 << endl;
+        if (i != v && visitados[i] > 0) {
+            cout << "Alcançavel: " << i+1 << " (distancia: " << visitados[i] << " passos)" << endl;
         }
     }
 }
 
 // Fecho Transitivo Inverso do vertice
 void FTI(int v, int G[][MAX_VERTICES], int numVertices, int visitados[]) {
-    fill(visitados, visitados+numVertices, false);
+    fill(visitados, visitados+numVertices, -1); // -1 = nao visitado
     Fila Q;
     criarFila(Q, MAX_VERTICES);
     enfileirar(Q, v); 
-    visitados[v] = true; 
+    visitados[v] = 0; 
 
     while (!vazia(Q)) {
         int atual;
         desenfileirar(Q, atual);
 
         for (int i = 0; i < numVertices; i++) {
-            if (G[i][atual] == 1 && !visitados[i]) {
-                visitados[i] = true;
+            if (G[i][atual] == 1 && visitados[i] == -1) { // Nao visitado
+                visitados[i] = visitados[atual] + 1;
                 enfileirar(Q, i);
             }
         }
@@ -196,8 +217,8 @@ void FTI_show(int v, int G[][MAX_VERTICES], int numVertices, int visitados[]) {
 
     cout << "\nFecho transitivo inverso do vertice " << v + 1 << ":\n";
     for (int i = 0; i < numVertices; i++) {
-        if (i != v && visitados[i]) {
-            cout << "Pode alcançar " << v+1 << ": " << i+1 << endl;
+        if (i != v && visitados[i] > 0) {
+            cout << "O vértice " << i+1 << " alcança (distancia: " << visitados[i] << " passos)" << endl;
         }
     }
 }
@@ -215,8 +236,10 @@ void subgrafosFCM(int G[][MAX_VERTICES], int numVertices) {
 
     for (int v = 0; v < numVertices; v++) { // Iteraçao por todos os vertices
         if (!comSubgrafos[v]) {
-            int ftd[MAX_VERTICES] = {0}; // Marca os vertices alcançaveis por v
-            int fti[MAX_VERTICES] = {0}; // Marca os vertices que alcançam v
+            int ftd[MAX_VERTICES]; // Marca os vertices alcançaveis por v
+            int fti[MAX_VERTICES]; // Marca os vertices que alcançam v
+            fill(ftd, ftd + numVertices, -1);
+            fill(fti, fti + numVertices, -1);
 
             // Processa os fechos
             FTD(v, G, numVertices, ftd);
@@ -225,7 +248,7 @@ void subgrafosFCM(int G[][MAX_VERTICES], int numVertices) {
             // Interseçao FTD ∩ FTI
             cout << "{ ";
             for (int i = 0; i < numVertices; i++) {
-                if (ftd[i] && fti[i]) {
+                if (ftd[i] >= 0 && fti[i] >= 0) {
                     cout << i+1 << " ";
                     comSubgrafos[i] = true;
                 }
@@ -438,6 +461,7 @@ int main() {
 
                 if(subopcao == 1) {
                     lerArestas(grafo, numVertices, dirigido);
+                    fill(visitados, visitados + MAX_VERTICES, false);
                 } else if(subopcao == 2) {
                     cout << "Digite as arestas a remover (u v). Digite 0 em qualquer vértice para finalizar:\n";
                     while(true) {
@@ -452,6 +476,7 @@ int main() {
                             cout << "Aresta inválida! Digite novamente.\n";
                         }
                     }
+                    fill(visitados, visitados + MAX_VERTICES, false);
                 } else if(subopcao == 3) { // Adicionar vertices
                     int qtd;
                     cout << "Quantos vertices deseja adicionar? ";
@@ -472,6 +497,7 @@ int main() {
                             cout << "Vertice " << numVertices << " adicionado.\n";
                         }
                     }
+                    fill(visitados, visitados + MAX_VERTICES, false);
                 } else if(subopcao == 4) {
                     int v = lerVertice(numVertices, "Digite o vertice a remover: ");
                     for(int i = v; i < numVertices-1; i++){
@@ -482,8 +508,9 @@ int main() {
                     }
                     numVertices--;
                     cout << "Vertice removido.\n";
+                    fill(visitados, visitados + MAX_VERTICES, false);
                 } else {
-                    cout << "Vertice invalido!\n";
+                    cout << "Opcao invalida!\n";
                 }
                 pause();
                 break;
