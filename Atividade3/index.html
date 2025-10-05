@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interface Gráfica para Grafos</title>
+    <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        /* Variáveis CSS globais com a nova paleta de cores "Coquette" */
+        :root {
+            /* Cores */
+            --bg-color: #fff5f8;              /* Fundo rosa bem clarinho */
+            --panel-color: #ffffff;           /* Painéis brancos */
+            --text-color: #705d62;            /* Texto em tom de marrom rosado escuro */
+            --text-secondary-color: #ad9a9f;  /* Texto mais claro para rótulos */
+            --accent-color: #fec5d9;           /* Rosa suave como cor de destaque */
+            --accent-hover: #fa9cb7;           /* Rosa um pouco mais forte */
+            --border-color: #ffe0e9;          /* Cor de borda rosada*/
+            --button-secondary-bg: #ffeef2;
+            --button-secondary-text: #8b7379;
+            --button-secondary-hover-bg: #fddde6;
+            
+            /* Fontes */
+            --main-font: 'Plus Jakarta Sans', sans-serif;
+            --title-font: 'Playfair Display', serif;
+        }
+
+        /* Estilização do corpo da página (<body>) */
+        body {
+            font-family: var(--main-font);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0.8em;
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 0.8em;
+            height: calc(100vh - 1.6em);
+        }
+
+        /* Estilo para os painéis principais */
+        .panel {
+            background-color: var(--panel-color);
+            padding: 1.5em;
+            border-radius: 12px; /* Bordas um pouco mais arredondadas */
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 0.8em; 
+        }
+
+        .controls { overflow-y: auto; }
+        .output { overflow: hidden; }
+
+        /* Estilo para os títulos (<h2>) */
+        h2 {
+            margin: 0;
+            color: var(--text-color);
+            font-family: var(--title-font); /* Aplica a nova fonte de título */
+            border-bottom: 2px dotted var(--accent-color); /* Linha pontilhada delicada */
+            padding-bottom: 0.3em;
+            font-weight: 600;
+            font-size: 1.3rem;
+        }
+
+        /* Estilo para os grupos de formulário */
+        .form-group { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 1em; 
+        }
+        
+        /* Estilo para os campos de entrada de texto e botões */
+        input[type="number"], textarea {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.7em;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 0.95rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        /* Efeito visual para quando o usuário clica em um campo de texto */
+        input[type="number"]:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(254, 197, 217, 0.5); /* Sombra rosa suave */
+        }
+
+        /* Estilo para o grupo de botões de operações */
+        .button-group { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 12px;
+        }
+
+        /* Estilo para os botões */
+        button {
+            background-color: var(--accent-color);
+            color: #fff;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.1);
+            border: none;
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: var(--main-font);
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+        button:hover { 
+            background-color: var(--accent-hover); 
+            transform: translateY(-2px);
+        }
+        
+        /* Estilo para o botão secundário ("Desenhar Grafo") */
+        button.secondary { 
+            background-color: var(--button-secondary-bg); 
+            color: var(--button-secondary-text);
+            text-shadow: none;
+        }
+        button.secondary:hover { background-color: var(--button-secondary-hover-bg); }
+        
+        /* Layout para o painel da direita (saída) */
+        .output {
+            display: grid;
+            grid-template-rows: auto 1fr auto auto;
+        }
+
+        /* Estilo para a "caixinha do grafo" */
+        #cy {
+            width: 100%;
+            height: 100%; 
+            min-height: 200px;
+            background-color: var(--panel-color);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            grid-row: 2;
+        }
+
+        /* Estilo para a "caixinha de saída de texto" */
+        #output-pre {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            padding: 1em;
+            white-space: pre-wrap;
+            border-radius: 8px;
+            height: 90px;
+            overflow-y: auto; 
+            font-size: 0.85rem;
+            grid-row: 4;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="panel controls">
+        <div class="form-group">
+            <h2>Configuração</h2>
+            <label for="num-vertices">Número de Vértices</label>
+            <input type="number" id="num-vertices" value="5" min="1" max="100">
+        </div>
+        <div class="form-group">
+            <label><input type="checkbox" id="is-directed"> Grafo Direcionado</label>
+        </div>
+        <div class="form-group">
+            <label for="edges-input">Arestas (formato 'u v', uma por linha)</label>
+            <textarea id="edges-input" rows="8">1 2
+1 5
+2 3
+2 4
+2 5
+3 4
+4 5</textarea>
+            <div class="draw-color-group">
+                <button class="secondary" onclick="updateGraphDisplay()">Desenhar Grafo</button>
+                <button onclick="runCommand('colorir')">Colorir Grafo</button>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <h2>Operações</h2>
+            <label for="start-vertex">Vértice Inicial (1 a N)</label>
+            <input type="number" id="start-vertex" value="1" min="1">
+            <div class="button-group">
+                <button onclick="runCommand('dfs')">DFS</button>
+                <button onclick="runCommand('bfs')">BFS</button>
+                <button onclick="runCommand('ftd')">FTD</button>
+                <button onclick="runCommand('fti')">FTI</button>
+                <button onclick="runCommand('conectividade')" style="grid-column: span 2;">Verificar Conectividade</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel output">
+        <h2>Visualização do Grafo</h2>
+        <div id="cy"></div>
+        <h2>Saída do Programa</h2>
+        <pre id="output-pre">A saída do programa aparecerá aqui...</pre>
+    </div>
+
+    <script>
+        // --- 1. SELEÇÃO DOS ELEMENTOS HTML ---
+        // Guarda referências aos elementos HTML em variáveis para usá-las facilmente no código.
+        const numVerticesInput = document.getElementById('num-vertices');
+        const isDirectedCheckbox = document.getElementById('is-directed');
+        const edgesTextarea = document.getElementById('edges-input');
+        const startVertexInput = document.getElementById('start-vertex');
+        const outputPre = document.getElementById('output-pre');
+
+        // --- 2. VARIÁVEIS GLOBAIS ---
+        // Variável para guardar a instância do grafo (para que possamos modificá-lo depois).
+        let cy;
+        // Uma paleta de cores para usar na função de coloração.
+        const colorPalette = [
+            '#e6194B', '#3cb44b', '#ffe119', '#4363d8', '#f58231', 
+            '#911eb4', '#42d4f4', '#f032e6', '#bfef45', '#fabed4', 
+            '#469990', '#dcbeff', '#9A6324', '#fffac8', '#800000'
+        ];
+
+        // --- 3. FUNÇÕES PRINCIPAIS ---
+
+        /**
+         * Função para desenhar o grafo na tela usando a biblioteca Cytoscape.
+         * @param {Array} nodes - Um array com os vértices (nós) do grafo.
+         * @param {Array} edges - Um array com as arestas do grafo.
+         * @param {boolean} isDirected - Se o grafo é direcionado ou não (para mostrar as setas).
+         */
+        function plotGraph(nodes, edges, isDirected) {
+            // Cria a instância do grafo.
+            cy = cytoscape({
+                container: document.getElementById('cy'), // Onde o grafo será desenhado
+                elements: { // Os dados do grafo
+                    nodes: nodes,
+                    edges: edges
+                },
+                style: [ // Regras de estilo para a aparência do grafo
+                    {
+                        selector: 'node', // Estilo dos vértices (nós)
+                        style: {
+                            'background-color': '#c5a7b0', // Um tom de rosa acinzentado para os nós
+                            'label': 'data(id)', // O texto dentro do nó será seu ID
+                            'color': '#ffffff', // Cor do texto do rótulo (o número)
+                            'font-family': 'var(--main-font)',
+                            'font-weight': '600',
+                            'text-valign': 'center',
+                            'text-halign': 'center'
+                        }
+                    },
+                    {
+                        selector: 'edge', // Estilo das arestas
+                        style: {
+                            'width': 2.5,
+                            'line-color': '#e6d1d8', // Tom de rosa claro para as arestas
+                            'target-arrow-color': '#e6d1d8',
+                            'target-arrow-shape': isDirected ? 'triangle' : 'none', // Mostra seta se for direcionado
+                            'curve-style': 'bezier'
+                        }
+                    }
+                ],
+                layout: { // Define como os nós serão organizados na tela
+                    name: 'cose', 
+                    animate: false,
+                    padding: 10
+                }
+            });
+        }
+
+        /**
+         * Lê os dados dos campos de formulário e os converte em formatos úteis.
+         * Retorna um objeto com a matriz de adjacência (para o C++) e os dados para o Cytoscape.
+         */
+        function parseGraphData() {
+            const numVertices = parseInt(numVerticesInput.value);
+            const isDirected = isDirectedCheckbox.checked;
+            const edgesText = edgesTextarea.value.trim();
+
+            let cyNodes = [];
+            for (let i = 1; i <= numVertices; i++) {
+                cyNodes.push({ data: { id: i.toString() } });
+            }
+
+            // Cria uma matriz de adjacência preenchida com zeros.
+            let matrix = Array(numVertices).fill(0).map(() => Array(numVertices).fill(0));
+            let cyEdges = [];
+            
+            if (numVertices <= 0) return { error: 'Número de vértices deve ser maior que 0.' };
+
+            // Processa as arestas digitadas pelo usuário
+            if(edgesText) {
+                const lines = edgesText.split('\n');
+                for (const line of lines) {
+                    if (!line.trim()) continue;
+                    
+                    const parts = line.trim().split(/\s+/);
+                    if (parts.length !== 2) return { error: `Formato de aresta inválido: "${line}"` };
+                    
+                    const u = parseInt(parts[0]);
+                    const v = parseInt(parts[1]);
+
+                    // Preenche a matriz de adjacência e a lista de arestas para o Cytoscape
+                    matrix[u - 1][v - 1] = 1;
+                    if (!isDirected) matrix[v - 1][u - 1] = 1; // Se não for direcionado, a aresta é de mão dupla
+
+                    cyEdges.push({ data: { id: `${u}-${v}`, source: u.toString(), target: v.toString() } });
+                }
+            }
+            
+            return { numVertices, isDirected, matrix, cyNodes, cyEdges, error: null };
+        }
+        
+        /**
+         * Função chamada pelo botão "Desenhar Grafo". Ela lê os dados e chama a função de plotagem.
+         */
+        function updateGraphDisplay() {
+            const { cyNodes, cyEdges, isDirected, error } = parseGraphData();
+            if (error) {
+                outputPre.textContent = `Erro na entrada: ${error}`;
+                return;
+            }
+            plotGraph(cyNodes, cyEdges, isDirected);
+            outputPre.textContent = 'Grafo desenhado. Escolha uma operação.';
+        }
+
+        /**
+         * A função principal que é chamada por TODOS os botões de operação (DFS, Colorir, etc.).
+         * @param {string} command - O nome do comando a ser executado (ex: 'dfs', 'colorir').
+         */
+        async function runCommand(command) {
+            outputPre.textContent = 'Executando...';
+            
+            // 1. Lê e valida os dados do formulário
+            const { numVertices, isDirected, matrix, cyNodes, cyEdges, error } = parseGraphData();
+            if (error) {
+                outputPre.textContent = `Erro: ${error}`;
+                return;
+            }
+            // Redesenha o grafo para garantir que ele está atualizado.
+            plotGraph(cyNodes, cyEdges, isDirected);
+
+            // 2. Prepara os dados para enviar ao servidor Python
+            const payload = {
+                command: command,
+                numVertices: numVertices,
+                isDirected: isDirected,
+                matrix: matrix,
+                startVertex: parseInt(startVertexInput.value) - 1
+            };
+            
+            try {
+                // 3. Envia os dados para o servidor Python (backend) usando 'fetch'
+                const response = await fetch('/run', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                // 4. Recebe a resposta do servidor
+                const result = await response.json();
+                // 5. Exibe a saída de texto na tela
+                outputPre.textContent = result.error || result.output;
+
+                // 6. Lógica para o comando 'colorir'
+                if (command === 'colorir' && result.colors && cy) {
+                    // Percorre a lista de cores recebida do backend
+                    result.colors.forEach((color, index) => {
+                        const vertexId = index + 1;
+                        // Seleciona uma cor da nossa paleta de cores
+                        const colorHex = colorPalette[color - 1] || '#888888';
+                        // Aplica a cor ao vértice correspondente no grafo desenhado
+                        cy.getElementById(vertexId.toString()).style('background-color', colorHex);
+                    });
+                }
+
+            } catch (err) {
+                outputPre.textContent = 'Erro de comunicação com o servidor. Verifique se o `server.py` está rodando.';
+            }
+        }
+
+        // --- 4. INICIALIZAÇÃO ---
+        // Desenha o grafo inicial assim que a página é carregada pela primeira vez.
+        window.addEventListener('load', updateGraphDisplay);
+    </script>
+</body>
+</html>
