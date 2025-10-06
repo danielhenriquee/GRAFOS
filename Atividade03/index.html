@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 
     <style>
-        /* Variáveis CSS globais com a nova paleta de cores "Coquette" */
+        /* Variáveis CSS globais  */
         :root {
             /* Cores */
             --bg-color: #fff5f8;              /* Fundo rosa bem clarinho */
@@ -19,15 +19,15 @@
             --text-color: #705d62;            /* Texto em tom de marrom rosado escuro */
             --text-secondary-color: #ad9a9f;  /* Texto mais claro para rótulos */
             --accent-color: #fec5d9;           /* Rosa suave como cor de destaque */
-            --accent-hover: #fa9cb7;           /* Rosa um pouco mais forte */
-            --border-color: #ffe0e9;          /* Cor de borda rosada*/
+            --accent-hover: #fa9cb7;           /* Rosa um pouco mais forte para hover */
+            --border-color: #ffe0e9;          /* Cor de borda rosada */
             --button-secondary-bg: #ffeef2;
             --button-secondary-text: #8b7379;
             --button-secondary-hover-bg: #fddde6;
             
             /* Fontes */
             --main-font: 'Plus Jakarta Sans', sans-serif;
-            --title-font: 'Playfair Display', serif;
+            --title-font: 'Playfair Display', serif; /* fonte para os títulos */
         }
 
         /* Estilização do corpo da página (<body>) */
@@ -47,7 +47,7 @@
         .panel {
             background-color: var(--panel-color);
             padding: 1.5em;
-            border-radius: 12px; /* Bordas um pouco mais arredondadas */
+            border-radius: 12px;
             border: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
@@ -157,6 +157,51 @@
             font-size: 0.85rem;
             grid-row: 4;
         }
+
+        /* Estilos para o modal de aviso */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(112, 93, 98, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay:not(.hidden) {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-box {
+            background-color: var(--panel-color);
+            padding: 2em;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 400px;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay:not(.hidden) .modal-box {
+            transform: scale(1);
+        }
+
+        #aviso-mensagem {
+            margin: 0 0 1.5em 0;
+            font-size: 1rem;
+            color: var(--text-color);
+            white-space: pre-wrap;
+        }
     </style>
 </head>
 <body>
@@ -206,6 +251,13 @@
         <pre id="output-pre">A saída do programa aparecerá aqui...</pre>
     </div>
 
+    <div id="aviso-modal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <p id="aviso-mensagem"></p>
+            <button id="aviso-fechar">Fechar</button>
+        </div>
+    </div>
+
     <script>
         // --- 1. SELEÇÃO DOS ELEMENTOS HTML ---
         // Guarda referências aos elementos HTML em variáveis para usá-las facilmente no código.
@@ -215,39 +267,63 @@
         const startVertexInput = document.getElementById('start-vertex');
         const outputPre = document.getElementById('output-pre');
 
-        // --- 2. VARIÁVEIS GLOBAIS ---
-        // Variável para guardar a instância do grafo (para que possamos modificá-lo depois).
-        let cy;
-        // Uma paleta de cores para usar na função de coloração.
-        const colorPalette = [
+        // Seleção dos elementos do novo modal de aviso
+        const modal = document.getElementById('aviso-modal');
+        const mensagemP = document.getElementById('aviso-mensagem');
+        const botaoFechar = document.getElementById('aviso-fechar');
+
+        // --- 2. LÓGICA DO MODAL DE AVISO ---
+        /**
+         * Mostra o modal de aviso com uma mensagem específica.
+         * @param {string} mensagem O texto a ser exibido no aviso.
+         */
+        function mostrarAviso(mensagem) {
+            mensagemP.innerText = `AVISO:\n\n${mensagem}`; // Adiciona o texto ao modal
+            modal.classList.remove('hidden'); // Mostra o modal
+        }
+
+        /**
+         * Esconde o modal de aviso.
+         */
+        function fecharAviso() {
+            modal.classList.add('hidden'); // Esconde o modal
+        }
+
+        botaoFechar.addEventListener('click', fecharAviso); // Fecha ao clicar no botão "Fechar"
+        modal.addEventListener('click', (event) => {
+            // Fecha também se o usuário clicar no fundo esmaecido (fora da caixa de aviso)
+            if (event.target === modal) {
+                fecharAviso();
+            }
+        });
+
+        // --- 3. VARIÁVEIS GLOBAIS DO GRAFO ---
+        let cy; // Variável para guardar a instância do grafo
+        const colorPalette = [ // Paleta de cores para a função de coloração
             '#e6194B', '#3cb44b', '#ffe119', '#4363d8', '#f58231', 
             '#911eb4', '#42d4f4', '#f032e6', '#bfef45', '#fabed4', 
             '#469990', '#dcbeff', '#9A6324', '#fffac8', '#800000'
         ];
 
-        // --- 3. FUNÇÕES PRINCIPAIS ---
+        // --- 4. FUNÇÕES PRINCIPAIS DO GRAFO ---
 
         /**
          * Função para desenhar o grafo na tela usando a biblioteca Cytoscape.
          * @param {Array} nodes - Um array com os vértices (nós) do grafo.
          * @param {Array} edges - Um array com as arestas do grafo.
-         * @param {boolean} isDirected - Se o grafo é direcionado ou não (para mostrar as setas).
+         * @param {boolean} isDirected - Se o grafo é direcionado ou não.
          */
         function plotGraph(nodes, edges, isDirected) {
-            // Cria a instância do grafo.
             cy = cytoscape({
-                container: document.getElementById('cy'), // Onde o grafo será desenhado
-                elements: { // Os dados do grafo
-                    nodes: nodes,
-                    edges: edges
-                },
-                style: [ // Regras de estilo para a aparência do grafo
+                container: document.getElementById('cy'),
+                elements: { nodes: nodes, edges: edges },
+                style: [
                     {
-                        selector: 'node', // Estilo dos vértices (nós)
+                        selector: 'node',
                         style: {
-                            'background-color': '#c5a7b0', // Um tom de rosa acinzentado para os nós
-                            'label': 'data(id)', // O texto dentro do nó será seu ID
-                            'color': '#ffffff', // Cor do texto do rótulo (o número)
+                            'background-color': '#c5a7b0',
+                            'label': 'data(id)',
+                            'color': '#ffffff',
                             'font-family': 'var(--main-font)',
                             'font-weight': '600',
                             'text-valign': 'center',
@@ -255,27 +331,23 @@
                         }
                     },
                     {
-                        selector: 'edge', // Estilo das arestas
+                        selector: 'edge',
                         style: {
                             'width': 2.5,
-                            'line-color': '#e6d1d8', // Tom de rosa claro para as arestas
+                            'line-color': '#e6d1d8',
                             'target-arrow-color': '#e6d1d8',
-                            'target-arrow-shape': isDirected ? 'triangle' : 'none', // Mostra seta se for direcionado
+                            'target-arrow-shape': isDirected ? 'triangle' : 'none',
                             'curve-style': 'bezier'
                         }
                     }
                 ],
-                layout: { // Define como os nós serão organizados na tela
-                    name: 'cose', 
-                    animate: false,
-                    padding: 10
-                }
+                layout: { name: 'cose', animate: false, padding: 10 }
             });
         }
 
         /**
          * Lê os dados dos campos de formulário e os converte em formatos úteis.
-         * Retorna um objeto com a matriz de adjacência (para o C++) e os dados para o Cytoscape.
+         * Retorna um objeto com dados para o C++ e para o Cytoscape.
          */
         function parseGraphData() {
             const numVertices = parseInt(numVerticesInput.value);
@@ -287,27 +359,28 @@
                 cyNodes.push({ data: { id: i.toString() } });
             }
 
-            // Cria uma matriz de adjacência preenchida com zeros.
             let matrix = Array(numVertices).fill(0).map(() => Array(numVertices).fill(0));
             let cyEdges = [];
             
-            if (numVertices <= 0) return { error: 'Número de vértices deve ser maior que 0.' };
+            if (isNaN(numVertices) || numVertices <= 0) return { error: 'O número de vértices deve ser maior que 0.' };
 
-            // Processa as arestas digitadas pelo usuário
             if(edgesText) {
                 const lines = edgesText.split('\n');
                 for (const line of lines) {
                     if (!line.trim()) continue;
                     
                     const parts = line.trim().split(/\s+/);
-                    if (parts.length !== 2) return { error: `Formato de aresta inválido: "${line}"` };
+                    if (parts.length !== 2) return { error: `Formato de aresta inválido: "${line}"\nUse o formato 'u v'.` };
                     
                     const u = parseInt(parts[0]);
                     const v = parseInt(parts[1]);
 
-                    // Preenche a matriz de adjacência e a lista de arestas para o Cytoscape
+                    if (isNaN(u) || isNaN(v) || u < 1 || u > numVertices || v < 1 || v > numVertices) {
+                        return { error: `Vértice inválido na aresta "${u} ${v}".\nOs vértices devem estar entre 1 e ${numVertices}.` };
+                    }
+                    
                     matrix[u - 1][v - 1] = 1;
-                    if (!isDirected) matrix[v - 1][u - 1] = 1; // Se não for direcionado, a aresta é de mão dupla
+                    if (!isDirected) matrix[v - 1][u - 1] = 1;
 
                     cyEdges.push({ data: { id: `${u}-${v}`, source: u.toString(), target: v.toString() } });
                 }
@@ -317,12 +390,13 @@
         }
         
         /**
-         * Função chamada pelo botão "Desenhar Grafo". Ela lê os dados e chama a função de plotagem.
+         * Função chamada pelo botão "Desenhar Grafo".
          */
         function updateGraphDisplay() {
             const { cyNodes, cyEdges, isDirected, error } = parseGraphData();
             if (error) {
-                outputPre.textContent = `Erro na entrada: ${error}`;
+                // Chama o novo aviso personalizado em caso de erro.
+                mostrarAviso(error);
                 return;
             }
             plotGraph(cyNodes, cyEdges, isDirected);
@@ -330,22 +404,31 @@
         }
 
         /**
-         * A função principal que é chamada por TODOS os botões de operação (DFS, Colorir, etc.).
-         * @param {string} command - O nome do comando a ser executado (ex: 'dfs', 'colorir').
+         * Função principal chamada por todos os botões de operação.
+         * @param {string} command - O comando a ser executado (ex: 'dfs', 'colorir').
          */
         async function runCommand(command) {
-            outputPre.textContent = 'Executando...';
-            
-            // 1. Lê e valida os dados do formulário
             const { numVertices, isDirected, matrix, cyNodes, cyEdges, error } = parseGraphData();
             if (error) {
-                outputPre.textContent = `Erro: ${error}`;
+                mostrarAviso(error);
                 return;
             }
-            // Redesenha o grafo para garantir que ele está atualizado.
+
+            if (command === 'dfs' || command === 'bfs' || command === 'ftd' || command === 'fti') {
+                const startVertex = parseInt(startVertexInput.value);
+                if (isNaN(startVertex)) {
+                    mostrarAviso('O Vértice Inicial deve ser um número.');
+                    return;
+                }
+                if (startVertex < 1 || startVertex > numVertices) {
+                    mostrarAviso(`O Vértice Inicial deve estar entre 1 e ${numVertices}.`);
+                    return;
+                }
+            }
+
+            outputPre.textContent = 'Executando...';
             plotGraph(cyNodes, cyEdges, isDirected);
 
-            // 2. Prepara os dados para enviar ao servidor Python
             const payload = {
                 command: command,
                 numVertices: numVertices,
@@ -355,25 +438,18 @@
             };
             
             try {
-                // 3. Envia os dados para o servidor Python (backend) usando 'fetch'
                 const response = await fetch('/run', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload),
                 });
-                // 4. Recebe a resposta do servidor
                 const result = await response.json();
-                // 5. Exibe a saída de texto na tela
                 outputPre.textContent = result.error || result.output;
 
-                // 6. Lógica para o comando 'colorir'
                 if (command === 'colorir' && result.colors && cy) {
-                    // Percorre a lista de cores recebida do backend
                     result.colors.forEach((color, index) => {
                         const vertexId = index + 1;
-                        // Seleciona uma cor da nossa paleta de cores
                         const colorHex = colorPalette[color - 1] || '#888888';
-                        // Aplica a cor ao vértice correspondente no grafo desenhado
                         cy.getElementById(vertexId.toString()).style('background-color', colorHex);
                     });
                 }
@@ -383,8 +459,8 @@
             }
         }
 
-        // --- 4. INICIALIZAÇÃO ---
-        // Desenha o grafo inicial assim que a página é carregada pela primeira vez.
+        // --- 5. INICIALIZAÇÃO ---
+        // Desenha o grafo inicial assim que a página é carregada.
         window.addEventListener('load', updateGraphDisplay);
     </script>
 </body>

@@ -1,5 +1,5 @@
 /*
-cd Atividade3
+cd Atividade03
 g++ main.cpp -o grafos
 python server.py
 */
@@ -422,7 +422,7 @@ void colorirGrafo(int G[][MAX_VERTICES], int numVertices, int cores[]) {
             }
         }
 
-        cout << "\nNumero Cromático (estimado): " << numCromatico << "\n";
+        cout << "\nNumero Cromático: " << numCromatico << "\n";
         
         // Mostra a ordem de coloração.
         cout << "\nOrdem de coloracao dos vertices:\n";
