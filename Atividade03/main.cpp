@@ -313,7 +313,7 @@ void conectividade(int G[][MAX_VERTICES], int numVertices, int visitados[]) {
     }
 }
 
-// ========= FUNÇÃO DE COLORAÇÃO =========
+// FUNÇÃO DE COLORAÇÃO
 void colorirGrafo(int G[][MAX_VERTICES], int numVertices, int cores[]) {
     fill(cores, cores + numVertices, 0); // 0 = não colorido
     int numCromatico = 0;
@@ -322,7 +322,7 @@ void colorirGrafo(int G[][MAX_VERTICES], int numVertices, int cores[]) {
     if (numVertices > 0) {
         int verticesColoridos = 0;
         
-        // Calcula os graus de todos os vértices UMA VEZ e guarda para usar depois.
+        // Calcula os graus de todos os vértices e guarda para usar depois.
         int graus[MAX_VERTICES];
         for (int i = 0; i < numVertices; i++) {
             graus[i] = 0;
@@ -360,7 +360,7 @@ void colorirGrafo(int G[][MAX_VERTICES], int numVertices, int cores[]) {
                     int saturacaoAtual = 0;
                     for (int u = 0; u < numVertices; u++) {
                         if ((G[v][u] == 1 || G[u][v] == 1) && cores[u] != 0) {
-                            if (!coresVizinhas[cores[u]]) {//Só atualiza se for uma cor nova 
+                            if (!coresVizinhas[cores[u]]) { //Só atualiza se for uma cor nova 
                                 coresVizinhas[cores[u]] = true;
                                 saturacaoAtual++;
                             }
@@ -408,7 +408,7 @@ void colorirGrafo(int G[][MAX_VERTICES], int numVertices, int cores[]) {
         }
     }
 
-    // --- SAÍDA PARA O USUÁRIO ---
+    // SAÍDA PARA O USUÁRIO
     cout << "Resultado da Coloracao (Heuristica):\n";
     if (numVertices > 0) {
         
@@ -435,7 +435,7 @@ void colorirGrafo(int G[][MAX_VERTICES], int numVertices, int cores[]) {
         cout << "O grafo esta vazio.\n";
     }
     
-    // --- SAÍDA PARA PARSING ---
+    // SAÍDA PARA PARSING 
     cout << "\n---PARSED_OUTPUT---\n";
     cout << "Cores:";
     for(int i = 0; i < numVertices; i++) {
@@ -450,7 +450,7 @@ void colorirGrafo(int G[][MAX_VERTICES], int numVertices, int cores[]) {
     cout << "NumeroCromatico: " << numCromatico << "\n";
 }
 
-// ========= FUNÇÕES AUXILIARES DE ENTRADA E MANIPULAÇÃO =========
+// FUNÇÕES AUXILIARES DE ENTRADA E MANIPULAÇÃO
 
 void inicializarGrafo(int G[][MAX_VERTICES], int numVertices) {
     for(int i = 0; i < numVertices; i++){
